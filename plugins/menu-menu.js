@@ -1,6 +1,5 @@
-import { promises } from 'fs'
+import { promises as fs } from 'fs'
 import { join } from 'path'
-import fetch from 'node-fetch'
 
 const emojicategoria = {
   info: 'ℹ️',
@@ -9,9 +8,9 @@ const emojicategoria = {
 }
 
 let tags = {
-  'main': '╭ *`SYSTEM MAIN`* ╯',
-  'sicurezza': '╭ *`SECURITY SYSTEM`* ╯',
-  'info': '╭ *`DATABASE INFO`* ╯'
+  main: '╭ *`SYSTEM MAIN`* ╯',
+  sicurezza: '╭ *`SECURITY SYSTEM`* ╯',
+  info: '╭ *`DATABASE INFO`* ╯'
 }
 
 const defaultMenu = {
@@ -27,17 +26,14 @@ const defaultMenu = {
  
  *PANNELLO DI CONTROLLO:*
 `.trimStart(),
+
   header: '      ⋆｡˚『 %category 』˚｡⋆\n╭',
   body: '*│ ➢* 『%emoji』 %cmd',
   footer: '*╰━━━━━━━──────━━━━━━━*\n',
   after: `_Powered by BLD-BOT Interface_`,
 }
 
-// --- MODIFICA PERCORSO: CARTELLA SPECIFICA ---
-// Se 'menu-principale.jpeg' è una CARTELLA, il percorso sarà:
-// join(process.cwd(), 'menu-principale.jpeg', 'NOME_FILE_DENTRO.jpg')
-// Qui sotto lo imposto cercando direttamente il file se è rinominato così:
-const localImg = join(process.cwd(), 'menu-principale.jpeg'); 
+const localImg = join(process.cwd(), 'menu-principale.jpeg')
 
 const bldButtons = [
   { title: "🛡️ SICUREZZA", command: "attiva" },
@@ -48,77 +44,85 @@ const bldButtons = [
   { title: "🛠️ STRUMENTI", command: "menustrumenti" },
   { title: "⭐ PREMIUM", command: "menupremium" },
   { title: "💰 EURO", command: "menueuro" }
-];
+]
 
-let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
+let handler = async (m, { conn, usedPrefix: _p }) => {
   try {
     await conn.sendPresenceUpdate('composing', m.chat)
-    let name = await conn.getName(m.sender) || 'User';
-    let _uptime = process.uptime() * 1000;
-    let uptime = clockString(_uptime);
-    let totalreg = Object.keys(global.db.data.users).length;
 
-    let help = Object.values(global.plugins).filter(plugin => !plugin.disabled).map(plugin => {
-      return {
-        help: Array.isArray(plugin.tags) ? plugin.help : [plugin.help],
-        tags: Array.isArray(plugin.tags) ? plugin.tags : [plugin.tags],
-        prefix: 'customPrefix' in plugin,
-      };
-    });
+    let name = await conn.getName(m.sender) || 'User'
+    let uptime = clockString(process.uptime() * 1000)
+    let totalreg = Object.keys(global.db.data.users).length
 
-    let menuTags = Object.keys(tags);
+    // MENU DINAMICO
+    let help = Object.values(global.plugins).filter(p => !p.disabled).map(p => ({
+      help: Array.isArray(p.help) ? p.help : [p.help],
+      tags: Array.isArray(p.tags) ? p.tags : [p.tags],
+      prefix: 'customPrefix' in p
+    }))
+
+    let menuTags = Object.keys(tags)
+
     let _text = [
       defaultMenu.before,
       ...menuTags.map(tag => {
         return defaultMenu.header.replace(/%category/g, tags[tag]) + '\n' + [
-          ...help.filter(menu => menu.tags && menu.tags.includes(tag) && menu.help).map(menu => {
-            return menu.help.map(help => {
-              return defaultMenu.body
-                .replace(/%cmd/g, menu.prefix ? help : _p + help)
-                .replace(/%emoji/g, emojicategoria[tag] || '🔹')
-                .trim();
-            }).join('\n');
-          }),
+          ...help
+            .filter(menu => menu.tags.includes(tag))
+            .map(menu => menu.help.map(h => 
+              defaultMenu.body
+                .replace(/%cmd/g, menu.prefix ? h : _p + h)
+                .replace(/%emoji/g, emojicategoria[tag])
+            ).join('\n')),
           defaultMenu.footer
-        ].join('\n');
+        ].join('\n')
       }),
       defaultMenu.after
-    ].join('\n');
+    ].join('\n')
 
-    let replace = { '%': '%', p: _p, uptime, name, totalreg };
-    let text = _text.replace(new RegExp(`%(${Object.keys(replace).sort((a, b) => b.length - a.length).join('|')})`, 'g'), (_, name) => '' + replace[name]);
+    let text = _text.replace(/%name/g, name)
+                    .replace(/%uptime/g, uptime)
+                    .replace(/%totalreg/g, totalreg)
 
-    const buttons = bldButtons.map(menu => ({
-      buttonId: _p + menu.command,
-      buttonText: { displayText: menu.title },
+    const buttons = bldButtons.map(btn => ({
+      buttonId: _p + btn.command,
+      buttonText: { displayText: btn.title },
       type: 1
-    }));
+    }))
 
-    // Invio con immagine dal nuovo percorso
+    let imageBuffer = null
+    try {
+      imageBuffer = await fs.readFile(localImg)
+      console.log("✅ Immagine caricata")
+    } catch (e) {
+      console.log("⚠️ Immagine NON trovata, uso fallback")
+    }
+
     await conn.sendMessage(m.chat, {
-      image: { url: localImg },
+      ...(imageBuffer ? { image: imageBuffer } : {}),
       caption: text.trim(),
       footer: "B L D - B O T  S Y S T E M",
       buttons: buttons,
       headerType: 4,
-      viewOnce: true 
-    }, { quoted: m });
+      viewOnce: true
+    }, { quoted: m })
 
-    await m.react('💠');
+    await m.react('💠')
 
   } catch (e) {
     console.error(e)
     conn.reply(m.chat, `❌ Errore BLD-SYS: ${e.message}`, m)
   }
-};
+}
 
-handler.help = ['menu'];
-handler.command = ['menu', 'help'];
-export default handler;
+handler.help = ['menu']
+handler.command = ['menu', 'help']
+
+export default handler
 
 function clockString(ms) {
-  let h = Math.floor(ms / 3600000);
-  let m = Math.floor(ms / 60000) % 60;
-  let s = Math.floor(ms / 1000) % 60;
-  return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':');
+  let h = Math.floor(ms / 3600000)
+  let m = Math.floor(ms / 60000) % 60
+  let s = Math.floor(ms / 1000) % 60
+  return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':')
 }
