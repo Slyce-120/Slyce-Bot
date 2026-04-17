@@ -53,6 +53,7 @@ global.moment = moment
 
 global.APIKeys = { // le keys con scritto "varebot" vanno cambiate con keys valide
     spotifyclientid: 'varebot',
+     spotifyclientid: 'varebot',
     spotifysecret: 'varebot',
     browserless: 'varebot',
     screenshotone: 'varebot',
@@ -69,6 +70,9 @@ global.APIKeys = { // le keys con scritto "varebot" vanno cambiate con keys vali
     removebg: 'FEx4CYmYN1QRQWD1mbZp87jV',
     openrouter: 'varebot',
     lastfm: '36f859a1fc4121e7f0e931806507d5f9',
+    sightengine_user: 'varebot',
+    sightengine_secret: 'varebot',
+
 }
 
 /*⭑⭒━━━✦❘༻🪷 SISTEMA XP/EURO 💸༺❘✦━━━⭒⭑*/
