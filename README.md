@@ -13,20 +13,20 @@
 </p>
 
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=25&pause=800&color=00FF00&center=true&vCenter=true&width=600&height=60&lines=STATUS:+ONLINE+✅;SYSTEM:+STABLE+🚀;OWNER:+BLOOD+🧛‍♂️" alt="Status SVG" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=25&pause=800&color=00FF00&center=true&vCenter=true&width=600&height=60&lines=STATUS:+ONLINE+✅;SYSTEM:+STABLE+🚀;OWNER:+BLOOD" alt="Status SVG" />
 </p>
 
 ---
 
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=30&pause=500&color=FF0000&center=true&vCenter=true&width=700&height=80&lines=DESCRIZIONE;SPECIFICHE+TECNICHE" alt="Titolo Descrizione" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=30&pause=500&color=FF0000&center=true&vCenter=true&width=700&height=80&lines=DESCRIZIONE;SPECIFICHE+TECNICHE" alt="Descrizione" />
 </p>
 
 **BLD-BLOOD-BOT** è un ecosistema avanzato per WhatsApp, costruito per garantire la massima potenza e stabilità.
 
-* **Core Ultra-Rapido:** Node.js (V16+) con architettura asincrona.
-* **Sicurezza:** Algoritmo Anti-Ban 4.0.
-* **Stabilità:** Gestione intelligente anti-crash.
+* **Core Ultra-Rapido:** Sviluppato in Node.js (V16+) con architettura asincrona.
+* **Sicurezza:** Algoritmo Anti-Ban 4.0 con rotazione degli header.
+* **Stabilità:** Gestione intelligente dei messaggi per prevenire crash.
 
 ---
 
@@ -35,46 +35,42 @@
 </p>
 
 ### 📱 METODO 1: TERMUX (Android)
-*Ideale per l'uso da smartphone. Copia e incolla i comandi uno alla volta:*
+*Apri Termux e incolla questi comandi uno alla volta:*
 
-1.  **Aggiorna il sistema e installa le dipendenze:**
-    ```bash
+1.  **Preparazione:** ```bash
     pkg update && pkg upgrade -y
     pkg install git nodejs -y
     ```
-2.  **Clona il repository ufficiale:**
+2.  **Clone del Bot:**
     ```bash
     git clone [https://github.com/BLOOD212/BLD-BLOOD-BOT.git](https://github.com/BLOOD212/BLD-BLOOD-BOT.git)
     cd BLD-BLOOD-BOT
     ```
-3.  **Installa i moduli e avvia:**
+3.  **Avvio:**
     ```bash
     npm install
     npm start
     ```
-    *Dopo l'avvio, scansiona il codice QR con WhatsApp.*
 
 ---
 
 ### 💻 METODO 2: VPS (Linux/Ubuntu)
-*Consigliato per uptime 24/7 senza interruzioni.*
+*Per chi vuole il bot attivo 24 ore su 24.*
 
-1.  **Connessione SSH:** Accedi alla tua VPS tramite terminale o PuTTY.
-2.  **Installazione Core:** Assicurati di avere Git e Node.js installati.
-3.  **Configurazione Persistenza (PM2):**
-    Usa PM2 per evitare che il bot si spenga quando chiudi la console:
+1.  **Installazione Core:** Assicurati di avere Node.js e Git sulla VPS.
+2.  **Persistenza con PM2:**
     ```bash
     npm install -g pm2
     pm2 start index.js --name "blood-bot"
     pm2 save
     pm2 startup
     ```
-4.  **Monitoraggio:** Usa `pm2 logs blood-bot` per vedere il codice QR e i log in tempo reale.
+3.  **Monitoraggio:** Usa `pm2 logs blood-bot` per visualizzare il QR Code e i log.
 
 ---
 
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=30&pause=500&color=FF0000&center=true&vCenter=true&width=700&height=80&lines=ANALISI;STATISTICHE+LIVE" alt="Analisi" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=30&pause=500&color=FF0000&center=true&vCenter=true&width=700&height=80&lines=STATISTICHE;LIVE+REPORT" alt="Analisi" />
 </p>
 
 <p align="center">
@@ -90,10 +86,10 @@
 ---
 
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=30&pause=500&color=FF0000&center=true&vCenter=true&width=700&height=80&lines=STAFF;E+CONTATTI" alt="Staff" />
+  <img src="https://readme-typing-svg.herokuapp.com?font=Orbitron&size=30&pause=500&color=FF0000&center=true&vCenter=true&width=700&height=80&lines=STAFF;CONTATTI" alt="Staff" />
 </p>
 
-* **Sviluppatore:** Blood 🧛‍♂️
+* **Sviluppatore:** Blood 
 * **Supporto WhatsApp:** [+39 370 133 0693](https://wa.me/393701330693)
 * **Community:** [UNISCITI AL CANALE](https://whatsapp.com/channel/0029VbCIFecBadmZCxG8ug0W)
 
