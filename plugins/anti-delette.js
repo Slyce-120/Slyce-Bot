@@ -1,39 +1,36 @@
-let handler = m => m
-// Database temporaneo in memoria
-const msgStorage = {}
+// Database temporaneo (in produzione usa qualcosa come Lowdb o un JSON)
+const msgStorage = {};
 
-handler.before = async function (m, { sock }) {
-    if (!m) return
-    const chat = m.chat
-    const msgId = m.id || m.key.id
+sock.ev.on('messages.upsert', async ({ messages }) => {
+    const m = messages[0];
+    if (!m.message) return;
 
-    // 1. SALVATAGGIO: Salva ogni messaggio in entrata
-    // Ignoriamo i messaggi di eliminazione stessi
-    if (!m.message?.protocolMessage) {
-        msgStorage[msgId] = m
+    const chat = m.key.remoteJid;
+    const msgId = m.key.id;
+
+    // 1. SALVATAGGIO: Se non è un messaggio di sistema, salvalo
+    if (!m.message.protocolMessage) {
+        msgStorage[msgId] = m;
     }
 
-    // 2. RILEVAMENTO ELIMINAZIONE
-    if (m.message?.protocolMessage && m.message.protocolMessage.type === 0) {
-        const deletedKey = m.message.protocolMessage.key
-        const savedMsg = msgStorage[deletedKey.id]
+    // 2. RECUPERO: Se arriva un comando di eliminazione (ProtocolMessage tipo 0)
+    if (m.message.protocolMessage && m.message.protocolMessage.type === 0) {
+        const deletedKey = m.message.protocolMessage.key;
+        const savedMsg = msgStorage[deletedKey.id];
 
         if (savedMsg) {
-            const user = deletedKey.participant || deletedKey.remoteJid
-            
+            const user = deletedKey.participant || deletedKey.remoteJid;
+
             await sock.sendMessage(chat, { 
-                text: `🚨 *ANTI-DELETE RILEVATO* 🚨\n\nL'utente @${user.split('@')[0]} ha eliminato un messaggio.`,
+                text: `🚨 *ANTI-DELETE RILEVATO* 🚨\n\n@${user.split('@')[0]} aveva eliminato questo:`,
                 mentions: [user]
-            }, { quoted: savedMsg })
+            });
 
-            // Inoltra il messaggio recuperato
-            await sock.copyNForward(chat, savedMsg, true)
+            // Inoltra il messaggio originale (testo, immagine, etc.)
+            await sock.copyNForward(chat, savedMsg, true);
 
-            // Pulizia per non intasare la RAM della VPS
-            delete msgStorage[deletedKey.id]
+            // Pulisci la memoria
+            delete msgStorage[deletedKey.id];
         }
     }
-    return true
-}
-
-export default handler
+});
