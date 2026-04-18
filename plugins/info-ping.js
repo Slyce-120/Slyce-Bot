@@ -1,54 +1,57 @@
-import speed from 'performance-now'
 import os from 'os'
 
 let handler = async (m, { conn, usedPrefix }) => {
   try {
-    let start = speed()
+    // Misurazione Nanometrica (High-Resolution Time)
+    const start = process.hrtime.bigint()
     await conn.readMessages([m.key])
-    let end = speed()
+    const end = process.hrtime.bigint()
     
-    // Precisione nanometrica
-    let latency = (end - start).toFixed(4)
+    // Calcolo latenza convertendo nanosecondi in millisecondi (con 6 decimali)
+    const latency = (Number(end - start) / 1000000).toFixed(6)
+    
     const uptimeMs = process.uptime() * 1000
-    const { rss, heapUsed } = process.memoryUsage()
+    const { rss, heapUsed, heapTotal } = process.memoryUsage()
     
-    // Info Sistema
-    const cpu = os.cpus()[0].model.replace(/Core\(TM\)|CPU|@|骁龙|Processor/g, '').trim()
-    const platform = os.platform().toUpperCase()
+    // Load Average (Precisione Linux)
+    const load = os.loadavg().map(l => l.toFixed(2)).join(' | ')
+    const cpu = os.cpus()[0].model.replace(/Core\(TM\)|CPU|@|骁龙|Processor|with IBPB/g, '').trim()
 
     const message = `
 🩸 *ＢＬＯＯＤ ＳＹＳＴＥＭ* 🩸
-『 ᴘᴇʀғᴏʀᴍᴀɴᴄᴇ ᴍᴏɴɪᴛᴏʀ 』
+『 *ᴘᴇʀғᴏʀᴍᴀɴᴄᴇ ᴍᴏɴɪᴛᴏʀ* 』
 
 ┏━━━━━━━━━━━━━━━━━━━━━┓
 ┃ 🧪 *LATENZA:* \`${latency} ms\`
 ┃ ⏳ *UPTIME:* \`${clockString(uptimeMs)}\`
-┃ 📡 *HOST:* \`${platform}\`
+┃ 📡 *HOST:* \`${os.platform().toUpperCase()}\`
 ┗━━━━━━━━━━━━━━━━━━━━━┛
 
-   〔 🖥️ *HARDWARE DATA* 〕
+   〔 *🖥️ HARDWARE DATA* 〕
   
-   ◈ **CPU:** \`${cpu}\`
-   ◈ **RAM:** \`${(heapUsed / 1024 / 1024).toFixed(2)}MB / ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(1)}GB\`
-   ◈ **RSS:** \`${(rss / 1024 / 1024).toFixed(2)} MB\`
+   ◈ *CPU:* \`${cpu}\`
+   ◈ *LOAD:* \`${load}\`
+   ◈ *RAM:* \`${(heapUsed / 1024 / 1024).toFixed(2)}MB / ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(1)}GB\`
+   ◈ *HEAP:* \`${(heapTotal / 1024 / 1024).toFixed(2)} MB\`
+   ◈ *RSS:* \`${(rss / 1024 / 1024).toFixed(2)} MB\`
 
    ┍━━━━━━━━━━━━━━━━━━━━━┑
       *OFFLINE IS NOT AN OPTION*
    ┕━━━━━━━━━━━━━━━━━━━━━┙
 
-      *OWNER:* **BLOOD**
+      *OWNER:* *BLOOD*
 `.trim()
 
     await conn.sendMessage(m.chat, {
       text: message,
       contextInfo: {
         externalAdReply: {
-          title: `[ ⚡ ] PING: ${latency}ms`,
-          body: `System Status: Optimal`,
+          title: `[ ⚡ ] PRECISION: ${latency}ms`,
+          body: `LOAD: ${load}`,
           mediaType: 1,
           previewType: 0,
           renderLargerThumbnail: false,
-          sourceUrl: 'https://github.com'
+          sourceUrl: ''
         }
       }
     }, { quoted: m })
