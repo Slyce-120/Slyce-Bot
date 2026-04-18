@@ -1,50 +1,57 @@
 import speed from 'performance-now'
+import os from 'os'
 
 let handler = async (m, { conn, usedPrefix }) => {
   try {
-
     let start = speed()
     await conn.readMessages([m.key])
     let end = speed()
-    let latency = (end - start).toFixed(2)
-
+    
+    // Precisione nanometrica
+    let latency = (end - start).toFixed(4)
     const uptimeMs = process.uptime() * 1000
-    const uptimeStr = clockString(uptimeMs)
-
-    const botStartTime = new Date(Date.now() - uptimeMs)
-    const activationTime = botStartTime.toLocaleString('it-IT', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
+    const { rss, heapUsed } = process.memoryUsage()
+    
+    // Info Sistema
+    const cpu = os.cpus()[0].model.replace(/Core\(TM\)|CPU|@|骁龙|Processor/g, '').trim()
+    const platform = os.platform().toUpperCase()
 
     const message = `
-╭━━━━━━•✦•━━━━━━╮
-                  𝑷𝑰𝑵𝑮
-            𝖇𝖑𝖔𝖔𝖉𝖇𝖔𝖙
-╰━━━━━━•✦•━━━━━━╯
+🩸 *ＢＬＯＯＤ ＳＹＳＴＥＭ* 🩸
+『 ᴘᴇʀғᴏʀᴍᴀɴᴄᴇ ᴍᴏɴɪᴛᴏʀ 』
 
-𝑼𝒑𝒕𝒊𝒎𝒆: ${uptimeStr}
-𝑳𝒂𝒕𝒆𝒏𝒛𝒂: ${latency} ms
-𝑨𝒗𝒗𝒊𝒐: ${activationTime}
+┏━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🧪 *LATENZA:* \`${latency} ms\`
+┃ ⏳ *UPTIME:* \`${clockString(uptimeMs)}\`
+┃ 📡 *HOST:* \`${platform}\`
+┗━━━━━━━━━━━━━━━━━━━━━┛
 
-╭━━━━━━•✦•━━━━━━╮
-   𝑶𝒘𝒏𝒆𝒓: 𝐁𝐋𝐎𝐎𝐃
-   𝑺𝒕𝒂𝒕𝒐: _Online_
-╰━━━━━━•✦•━━━━━━╯
+   〔 🖥️ *HARDWARE DATA* 〕
+  
+   ◈ **CPU:** \`${cpu}\`
+   ◈ **RAM:** \`${(heapUsed / 1024 / 1024).toFixed(2)}MB / ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(1)}GB\`
+   ◈ **RSS:** \`${(rss / 1024 / 1024).toFixed(2)} MB\`
+
+   ┍━━━━━━━━━━━━━━━━━━━━━┑
+      *OFFLINE IS NOT AN OPTION*
+   ┕━━━━━━━━━━━━━━━━━━━━━┙
+
+      *OWNER:* **BLOOD**
 `.trim()
 
     await conn.sendMessage(m.chat, {
       text: message,
-      footer: `𝐏𝐢𝐧𝐠 ${nomebot}`,
-      buttons: [
-        { buttonId: `${usedPrefix}ping`, buttonText: { displayText: "🔄 𝐏𝐢𝐧𝐠" }, type: 1 }
-      ],
-      headerType: 1
-    })
+      contextInfo: {
+        externalAdReply: {
+          title: `[ ⚡ ] PING: ${latency}ms`,
+          body: `System Status: Optimal`,
+          mediaType: 1,
+          previewType: 0,
+          renderLargerThumbnail: false,
+          sourceUrl: 'https://github.com'
+        }
+      }
+    }, { quoted: m })
 
   } catch (e) {
     console.error(e)
@@ -55,7 +62,7 @@ function clockString(ms) {
   let h = Math.floor(ms / 3600000)
   let m = Math.floor((ms % 3600000) / 60000)
   let s = Math.floor((ms % 60000) / 1000)
-  return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':')
+  return `${h}h ${m}m ${s}s`
 }
 
 handler.help = ['ping']
