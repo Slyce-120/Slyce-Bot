@@ -14,9 +14,6 @@ ecco i riferimenti ufficiali del mio creatore.
 *┃* 💻 *DEV:* JavaScript / Node.js
 *┗━━━━━━━━━━━━━━━━┛*
 
-*───╼  SOCIAL LINKS  ╾───*
-『 🔗 』*GitHub:* github.com/BLOOD212
-『 📸 』*Instagram:* @blood_ilreal
 
 ━━━━━━━━━━━━━━━━━━━━
    *😈 𝖇𝖑𝖔𝖔𝖉 𝖉𝖔𝖒𝖎𝖓𝖆 ⚡*
