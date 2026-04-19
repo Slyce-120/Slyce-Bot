@@ -34,17 +34,39 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
 
         // --- MENU PRINCIPALE ---
         if (command === 'casino') {
-            let txt = `*🎰 GRAND CASINÒ ANIMATO 🎰*\n\n`
-            txt += `💰 *Saldo:* ${user.euro}€\n\n`
-            txt += `• ${usedPrefix}slot (100€)\n`
-            txt += `• ${usedPrefix}rigore <sx|cx|dx> (100€)\n`
-            txt += `• ${usedPrefix}puntacorsa <nome> (100€)\n`
-            txt += `• ${usedPrefix}playroulette <pari|dispari> (100€)\n`
-            txt += `• ${usedPrefix}gratta (200€)`
-            return m.reply(txt)
+            const buttons = [
+                { buttonId: `${usedPrefix}slot`, buttonText: { displayText: '🎰 SLOT' }, type: 1 },
+                { buttonId: `${usedPrefix}inforigore`, buttonText: { displayText: '⚽ RIGORI' }, type: 1 },
+                { buttonId: `${usedPrefix}infocorsa`, buttonText: { displayText: '🏇 CORSA' }, type: 1 },
+                { buttonId: `${usedPrefix}gratta`, buttonText: { displayText: '🎟️ GRATTA' }, type: 1 }
+            ]
+            return conn.sendMessage(m.chat, { 
+                text: `*🎰 GRAND CASINÒ ANIMATO 🎰*\n\n💰 *Saldo:* ${user.euro}€`,
+                buttons,
+                headerType: 1
+            }, { quoted: m })
         }
 
-        // --- SLOT MACHINE ---
+        // --- SOTTOMENU INFO ---
+        if (command === 'inforigore') {
+            const buttons = [
+                { buttonId: `${usedPrefix}rigore sx`, buttonText: { displayText: '⬅️ SINISTRA' }, type: 1 },
+                { buttonId: `${usedPrefix}rigore cx`, buttonText: { displayText: '⬆️ CENTRO' }, type: 1 },
+                { buttonId: `${usedPrefix}rigore dx`, buttonText: { displayText: '➡️ DESTRA' }, type: 1 }
+            ]
+            return conn.sendMessage(m.chat, { text: '⚽ *Scegli dove tirare il rigore:*', buttons }, { quoted: m })
+        }
+
+        if (command === 'infocorsa') {
+            const buttons = cavalliConfig.map(c => ({
+                buttonId: `${usedPrefix}puntacorsa ${c.nome}`,
+                buttonText: { displayText: `Punta su ${c.nome}` },
+                type: 1
+            }))
+            return conn.sendMessage(m.chat, { text: '🏇 *Scegli il cavallo vincente (X3):*', buttons }, { quoted: m })
+        }
+
+        // --- LOGICA SLOT ---
         if (command === 'slot') {
             if (!checkMoney(100)) return
             const encoder = new GIFEncoder(600, 250)
@@ -64,10 +86,20 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
             for(let i=0; i<10; i++) encoder.addFrame(ctx)
             encoder.finish()
             user.euro += win ? 200 : -100
-            return conn.sendMessage(m.chat, { video: encoder.out.getData(), gifPlayback: true, caption: win ? '✅ VINTO!' : '❌ PERSO!' }, { quoted: m })
+            
+            const buttons = [
+                { buttonId: `${usedPrefix}slot`, buttonText: { displayText: '🎰 RIGIOCA' }, type: 1 },
+                { buttonId: `${usedPrefix}casino`, buttonText: { displayText: '🏠 MENU' }, type: 1 }
+            ]
+            return conn.sendMessage(m.chat, { 
+                video: encoder.out.getData(), 
+                gifPlayback: true, 
+                caption: win ? `✅ *VINTO!* (+200€)\nSaldo: ${user.euro}€` : `❌ *PERSO!*\nSaldo: ${user.euro}€`,
+                buttons
+            }, { quoted: m })
         }
 
-        // --- RIGORI ---
+        // --- LOGICA RIGORE ---
         if (command === 'rigore') {
             if (!checkMoney(100)) return
             let tiro = args[0] || 'cx'
@@ -84,10 +116,19 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
             }
             encoder.finish()
             user.euro += win ? 150 : -100
-            return conn.sendMessage(m.chat, { video: encoder.out.getData(), gifPlayback: true, caption: win ? '⚽ GOOOL!' : '🧤 PARATA!' }, { quoted: m })
+            const buttons = [
+                { buttonId: `${usedPrefix}inforigore`, buttonText: { displayText: '⚽ RIGIOCA' }, type: 1 },
+                { buttonId: `${usedPrefix}casino`, buttonText: { displayText: '🏠 MENU' }, type: 1 }
+            ]
+            return conn.sendMessage(m.chat, { 
+                video: encoder.out.getData(), 
+                gifPlayback: true, 
+                caption: win ? '⚽ *GOOOL!*' : '🧤 *PARATA!*',
+                buttons
+            }, { quoted: m })
         }
 
-        // --- CORSA CAVALLI ---
+        // --- LOGICA CORSA ---
         if (command === 'puntacorsa') {
             if (!checkMoney(100)) return
             let scelta = args[0]?.toUpperCase()
@@ -99,37 +140,23 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
             for(let f=0; f<10; f++) {
                 ctx.fillStyle = '#558b2f'; ctx.fillRect(0,0,600,300)
                 cavalliConfig.forEach((c, i) => {
-                    let x = 50 + (f === 9 && i === winnerIdx ? 450 : Math.random()*300)
+                    let x = 50 + (f === 9 && i === winnerIdx ? 450 : Math.random()*350)
                     ctx.fillStyle = c.color; ctx.beginPath(); ctx.arc(x, 60+(i*60), 15, 0, Math.PI*2); ctx.fill()
-                    ctx.fillStyle = '#fff'; ctx.font = '12px Arial'; ctx.fillText(c.nome, 10, 65+(i*60))
                 })
                 encoder.addFrame(ctx)
             }
             encoder.finish()
             user.euro += win ? 300 : -100
-            return conn.sendMessage(m.chat, { video: encoder.out.getData(), gifPlayback: true, caption: win ? '🏆 VINTO!' : `❌ VINCE ${cavalliConfig[winnerIdx].nome}` }, { quoted: m })
-        }
-
-        // --- ROULETTE ---
-        if (command === 'playroulette') {
-            if (!checkMoney(100)) return
-            let n = Math.floor(Math.random()*37)
-            let scelta = args[0]?.toLowerCase()
-            let win = (scelta === 'pari' && n % 2 === 0 && n !== 0) || (scelta === 'dispari' && n % 2 !== 0)
-            const encoder = new GIFEncoder(300, 300)
-            encoder.start(); encoder.setRepeat(0); encoder.setDelay(100)
-            const canvas = createCanvas(300, 300); const ctx = canvas.getContext('2d')
-            for(let f=0; f<8; f++) {
-                ctx.fillStyle = '#064e3b'; ctx.fillRect(0,0,300,300)
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'
-                ctx.fillText(Math.floor(Math.random()*37), 150, 160)
-                encoder.addFrame(ctx)
-            }
-            ctx.fillStyle = '#064e3b'; ctx.fillRect(0,0,300,300); ctx.fillStyle = '#f1c40f'; ctx.fillText(n, 150, 160)
-            for(let i=0; i<10; i++) encoder.addFrame(ctx)
-            encoder.finish()
-            user.euro += win ? 150 : -100
-            return conn.sendMessage(m.chat, { video: encoder.out.getData(), gifPlayback: true, caption: win ? `✅ USCITO ${n}: VINTO!` : `❌ USCITO ${n}: PERSO!` }, { quoted: m })
+            const buttons = [
+                { buttonId: `${usedPrefix}infocorsa`, buttonText: { displayText: '🏇 RIGIOCA' }, type: 1 },
+                { buttonId: `${usedPrefix}casino`, buttonText: { displayText: '🏠 MENU' }, type: 1 }
+            ]
+            return conn.sendMessage(m.chat, { 
+                video: encoder.out.getData(), 
+                gifPlayback: true, 
+                caption: win ? `🏆 *VINTO!* Vince il ${cavalliConfig[winnerIdx].nome}` : `❌ *PERSO!* Ha vinto il ${cavalliConfig[winnerIdx].nome}`,
+                buttons
+            }, { quoted: m })
         }
 
         // --- GRATTA E VINCI ---
@@ -141,18 +168,19 @@ let handler = async (m, { conn, command, args, usedPrefix }) => {
             ctx.fillStyle = '#000'; ctx.font = 'bold 30px Arial'; ctx.textAlign = 'center'
             ctx.fillText(premio > 0 ? `HAI VINTO ${premio}€!` : 'NON HAI VINTO', 200, 110)
             user.euro += (premio - 200)
-            return conn.sendMessage(m.chat, { image: canvas.toBuffer(), caption: `Saldo attuale: ${user.euro}€` }, { quoted: m })
+            const buttons = [{ buttonId: `${usedPrefix}gratta`, buttonText: { displayText: '🎟️ RIGIOCA' }, type: 1 }]
+            return conn.sendMessage(m.chat, { image: canvas.toBuffer(), caption: `Saldo: ${user.euro}€`, buttons }, { quoted: m })
         }
 
     } catch (e) {
         console.error(e)
-        m.reply('❌ Errore durante la creazione della GIF. Riprova.')
+        m.reply('❌ Errore interno. Riprova.')
     }
 }
 
 handler.help = ['casino']
 handler.tags = ['giochi']
-handler.command = /^(casino|slot|rigore|puntacorsa|playroulette|gratta)$/i
+handler.command = /^(casino|slot|rigore|inforigore|infocorsa|puntacorsa|gratta)$/i
 handler.group = true
 
 export default handler
