@@ -1,4 +1,5 @@
 import { createCanvas, loadImage } from 'canvas'
+import GIFEncoder from 'gif-encoder-2'
 
 // --- CONFIGURAZIONI ---
 const fruits = ['🍒', '🍋', '🍉', '🍇', '🍎', '🍓']
@@ -18,138 +19,115 @@ const cavalliConfig = [
 ]
 
 let handler = async (m, { conn, command, args, usedPrefix }) => {
-    // --- SISTEMA EURO ---
     global.db.data.users[m.sender] = global.db.data.users[m.sender] || {}
     let user = global.db.data.users[m.sender]
-    if (user.euro === undefined) user.euro = 1000 // Inizializzazione se vuoto
+    if (user.euro === undefined) user.euro = 1000
 
-    // Funzione rapida per controllare i soldi
     const checkMoney = (costo) => {
         if (user.euro < costo) {
-            m.reply(`⚠️ Non hai abbastanza Euro! Ti servono ${costo}€ (Saldo: ${user.euro}€)`)
+            m.reply(`⚠️ Non hai abbastanza Euro! (Saldo: ${user.euro}€)`)
             return false
         }
         return true
     }
 
-    // --- 1. MENU PRINCIPALE ---
+    // --- 1. MENU ---
     if (command === 'casino') {
-        let intro = `*🎰 GRAND CASINÒ 🎰*\n*💰 SALDO:* *${user.euro}€*`
+        let intro = `*🎰 GRAND CASINÒ ANIMATO 🎰*\n*💰 SALDO:* *${user.euro}€*`
         const buttons = [
             { buttonId: `${usedPrefix}infoslot`, buttonText: { displayText: '🎰 SLOT' }, type: 1 },
-            { buttonId: `${usedPrefix}infobj`, buttonText: { displayText: '🃏 BLACKJACK' }, type: 1 },
+            { buttonId: `${usedPrefix}infocorsa`, buttonText: { displayText: '🏇 CORSA' }, type: 1 },
             { buttonId: `${usedPrefix}inforigore`, buttonText: { displayText: '⚽ RIGORI' }, type: 1 },
-            { buttonId: `${usedPrefix}inforoulette`, buttonText: { displayText: '🎡 ROULETTE' }, type: 1 },
-            { buttonId: `${usedPrefix}infogratta`, buttonText: { displayText: '🎟️ GRATTA&VINCI' }, type: 1 },
-            { buttonId: `${usedPrefix}infocorsa`, buttonText: { displayText: '🏇 CORSA' }, type: 1 }
+            { buttonId: `${usedPrefix}infogratta`, buttonText: { displayText: '🎟️ GRATTA' }, type: 1 }
         ]
         return conn.sendMessage(m.chat, { text: intro, buttons }, { quoted: m })
     }
 
-    // --- 2. GESTIONE INFO TASTI ---
+    // INFO TASTI
     if (command === 'infoslot') return conn.sendMessage(m.chat, { text: `*🎰 SLOT*\nPunta 100€!`, buttons: [{ buttonId: `${usedPrefix}slot`, buttonText: { displayText: '🎰 TIRA' }, type: 1 }] })
-    if (command === 'infobj') return conn.sendMessage(m.chat, { text: `*🃏 BLACKJACK*\nPunta 100€!`, buttons: [{ buttonId: `${usedPrefix}blackjack`, buttonText: { displayText: '🃏 GIOCA' }, type: 1 }] })
-    if (command === 'infogratta') return conn.sendMessage(m.chat, { text: `*🎟️ GRATTA & VINCI*\nCosto: 200€!`, buttons: [{ buttonId: `${usedPrefix}gratta`, buttonText: { displayText: '🎟️ COMPRA' }, type: 1 }] })
-    if (command === 'inforoulette') return conn.sendMessage(m.chat, { text: `*🎡 ROULETTE*\nScegli su cosa puntare (100€):`, buttons: [{ buttonId: `${usedPrefix}playroulette pari`, buttonText: { displayText: 'PARI' }, type: 1 }, { buttonId: `${usedPrefix}playroulette dispari`, buttonText: { displayText: 'DISPARI' }, type: 1 }] })
-    if (command === 'inforigore') return conn.sendMessage(m.chat, { text: `*⚽ SFIDA AI RIGORI*\nScegli l'angolo del tiro (100€):`, buttons: [{ buttonId: `${usedPrefix}rigore sx`, buttonText: { displayText: '⬅️ SX' }, type: 1 }, { buttonId: `${usedPrefix}rigore cx`, buttonText: { displayText: '⬆️ CX' }, type: 1 }, { buttonId: `${usedPrefix}rigore dx`, buttonText: { displayText: '➡️ DX' }, type: 1 }] })
-    if (command === 'infocorsa') return conn.sendMessage(m.chat, { text: `*🏇 CORSA CAVALLI*\nPunta 100€ sul vincitore (Paga X3):`, buttons: cavalliConfig.map(c => ({ buttonId: `${usedPrefix}puntacorsa ${c.nome}`, buttonText: { displayText: `${c.nome}` }, type: 1 })) })
+    if (command === 'inforigore') return conn.sendMessage(m.chat, { text: `*⚽ RIGORI*\nScegli dove tirare (100€):`, buttons: [{ buttonId: `${usedPrefix}rigore sx`, buttonText: { displayText: '⬅️ SX' }, type: 1 }, { buttonId: `${usedPrefix}rigore cx`, buttonText: { displayText: '⬆️ CX' }, type: 1 }, { buttonId: `${usedPrefix}rigore dx`, buttonText: { displayText: '➡️ DX' }, type: 1 }] })
+    if (command === 'infocorsa') return conn.sendMessage(m.chat, { text: `*🏇 CORSA*\nPunta 100€ sul vincitore:`, buttons: cavalliConfig.map(c => ({ buttonId: `${usedPrefix}puntacorsa ${c.nome}`, buttonText: { displayText: c.nome }, type: 1 })) })
+    if (command === 'infogratta') return conn.sendMessage(m.chat, { text: `*🎟️ GRATTA*\nCosto 200€`, buttons: [{ buttonId: `${usedPrefix}gratta`, buttonText: { displayText: '🎟️ COMPRA' }, type: 1 }] })
 
-    // --- 3. LOGICHE GIOCHI ---
+    // --- 2. LOGICHE ANIMATE ---
 
-    // ⚽ RIGORI
-    if (command === 'rigore') {
-        if (!checkMoney(100)) return
-        let parata = ['sx', 'cx', 'dx'][Math.floor(Math.random() * 3)]
-        let tiro = args[0], win = tiro !== parata
-        user.euro += win ? 150 : -100
-        const canvas = createCanvas(600, 350); const ctx = canvas.getContext('2d')
-        ctx.fillStyle = '#2e7d32'; ctx.fillRect(0, 0, 600, 350)
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 10; ctx.strokeRect(100, 50, 400, 250)
-        let pos = { sx: 160, cx: 300, dx: 440 }
-        ctx.fillStyle = '#111'; ctx.fillRect(pos[parata]-40, 160, 80, 20)
-        ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(pos[tiro] || 300, win ? 140 : 170, 15, 0, Math.PI*2); ctx.fill()
-        const buttons = [{ buttonId: `${usedPrefix}inforigore`, buttonText: { displayText: '⚽ RIGIOCA' }, type: 1 }, { buttonId: `${usedPrefix}casino`, buttonText: { displayText: '🏠 MENU' }, type: 1 }]
-        return conn.sendMessage(m.chat, { image: canvas.toBuffer(), caption: win ? '*⚽ GOOOL!*' : '*🧤 PARATA!*', buttons })
-    }
-
-    // 🏇 CORSA CAVALLI
-    if (command === 'puntacorsa') {
-        if (!checkMoney(100)) return
-        let vIdx = Math.floor(Math.random() * 4), win = args[0]?.toUpperCase() === cavalliConfig[vIdx].nome
-        user.euro += win ? 200 : -100
-        const canvas = createCanvas(700, 400); const ctx = canvas.getContext('2d')
-        ctx.fillStyle = '#8d6e63'; ctx.fillRect(0, 0, 700, 400)
-        for(let i=0; i<=4; i++) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(50, 50+(i*80)); ctx.lineTo(650, 50+(i*80)); ctx.stroke() }
-        cavalliConfig.forEach((c, i) => {
-            let xPos = (i === vIdx) ? 610 : Math.floor(Math.random() * 200) + 150
-            ctx.fillStyle = c.color; ctx.beginPath(); ctx.arc(xPos, 90+(i*80), 25, 0, Math.PI*2); ctx.fill()
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 15px Arial'; ctx.fillText(c.nome, 60, 95+(i*80))
-        })
-        const buttons = [{ buttonId: `${usedPrefix}infocorsa`, buttonText: { displayText: '🏇 RIGIOCA' }, type: 1 }, { buttonId: `${usedPrefix}casino`, buttonText: { displayText: '🏠 MENU' }, type: 1 }]
-        return conn.sendMessage(m.chat, { image: canvas.toBuffer(), caption: win ? '*✅ HAI VINTO!*' : `*❌ PERSO! VINCE IL ${cavalliConfig[vIdx].nome}*`, buttons })
-    }
-
-    // 🎡 ROULETTE
-    if (command === 'playroulette') {
-        if (!checkMoney(100)) return
-        let n = Math.floor(Math.random() * 37), win = (args[0] === 'pari' && n % 2 === 0 && n !== 0) || (args[0] === 'dispari' && n % 2 !== 0)
-        user.euro += win ? 100 : -100
-        const canvas = createCanvas(600, 400); const ctx = canvas.getContext('2d')
-        ctx.fillStyle = '#064e3b'; ctx.fillRect(0, 0, 600, 400)
-        ctx.strokeStyle = '#d4af37'; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(300, 180, 140, 0, Math.PI*2); ctx.stroke()
-        ctx.fillStyle = n === 0 ? '#10b981' : (n % 2 === 0 ? '#e74c3c' : '#2c3e50')
-        ctx.beginPath(); ctx.arc(300, 180, 60, 0, Math.PI*2); ctx.fill()
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 60px Arial'; ctx.textAlign = 'center'; ctx.fillText(n, 300, 200)
-        const buttons = [{ buttonId: `${usedPrefix}inforoulette`, buttonText: { displayText: '🎡 RIGIOCA' }, type: 1 }, { buttonId: `${usedPrefix}casino`, buttonText: { displayText: '🏠 MENU' }, type: 1 }]
-        return conn.sendMessage(m.chat, { image: canvas.toBuffer(), caption: win ? '*✅ VINTO!*' : '*❌ PERSO!*', buttons })
-    }
-
-    // 🎟️ GRATTA & VINCI
-    if (command === 'gratta') {
-        if (!checkMoney(200)) return
-        let v = [0, 0, 500, 0, 1000, 0, 5000][Math.floor(Math.random() * 7)]
-        user.euro += (v - 200)
-        const canvas = createCanvas(600, 300); const ctx = canvas.getContext('2d')
-        ctx.fillStyle = '#d4af37'; ctx.fillRect(0,0,600,300)
-        ctx.fillStyle = '#000'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'; ctx.fillText(v > 0 ? `VINTO ${v}€!` : 'NON HAI VINTO', 300, 160)
-        const buttons = [{ buttonId: `${usedPrefix}infogratta`, buttonText: { displayText: '🎟️ RIGIOCA' }, type: 1 }, { buttonId: `${usedPrefix}casino`, buttonText: { displayText: '🏠 MENU' }, type: 1 }]
-        return conn.sendMessage(m.chat, { image: canvas.toBuffer(), caption: `*SALDO:* ${user.euro}€`, buttons })
-    }
-
-    // 🃏 BLACKJACK
-    if (command === 'blackjack' || command === 'blakjak') {
-        if (!checkMoney(100)) return
-        let tu = Math.floor(Math.random() * 11) + 11, banco = Math.floor(Math.random() * 10) + 12
-        let win = (tu <= 21 && (tu > banco || banco > 21))
-        user.euro += win ? 100 : -100
-        const canvas = createCanvas(600, 300); const ctx = canvas.getContext('2d')
-        ctx.fillStyle = '#1b5e20'; ctx.fillRect(0,0,600,300)
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'
-        ctx.fillText(`TU: ${tu} | BANCO: ${banco}`, 300, 130); ctx.fillText(win ? 'VITTORIA!' : 'SCONFITTA!', 300, 220)
-        const buttons = [{ buttonId: `${usedPrefix}infobj`, buttonText: { displayText: '🃏 RIGIOCA' }, type: 1 }, { buttonId: `${usedPrefix}casino`, buttonText: { displayText: '🏠 MENU' }, type: 1 }]
-        return conn.sendMessage(m.chat, { image: canvas.toBuffer(), caption: `*SALDO:* ${user.euro}€`, buttons })
-    }
-
-    // 🎰 SLOT
+    // 🎰 SLOT ANIMATA
     if (command === 'slot') {
         if (!checkMoney(100)) return
-        let r = [fruits[Math.floor(Math.random() * 6)], fruits[Math.floor(Math.random() * 6)], fruits[Math.floor(Math.random() * 6)]]
-        let win = (r[0] === r[1] || r[1] === r[2] || r[0] === r[2])
-        user.euro += win ? 200 : -100
+        const encoder = new GIFEncoder(600, 250); encoder.start(); encoder.setRepeat(0); encoder.setDelay(100); encoder.setQuality(10)
         const canvas = createCanvas(600, 250); const ctx = canvas.getContext('2d')
-        ctx.fillStyle = '#111'; ctx.fillRect(0,0,600,250)
-        try {
-            const i1 = await loadImage(fruitURLs[r[0]]), i2 = await loadImage(fruitURLs[r[1]]), i3 = await loadImage(fruitURLs[r[2]])
-            ctx.drawImage(i1, 100, 50, 100, 100); ctx.drawImage(i2, 250, 50, 100, 100); ctx.drawImage(i3, 400, 50, 100, 100)
-        } catch (e) {}
-        const buttons = [{ buttonId: `${usedPrefix}slot`, buttonText: { displayText: '🎰 RIGIOCA' }, type: 1 }, { buttonId: `${usedPrefix}casino`, buttonText: { displayText: '🏠 MENU' }, type: 1 }]
-        return conn.sendMessage(m.chat, { image: canvas.toBuffer(), caption: `*SALDO:* ${user.euro}€`, buttons })
+        
+        let final = [fruits[Math.floor(Math.random()*6)], fruits[Math.floor(Math.random()*6)], fruits[Math.floor(Math.random()*6)]]
+        let win = (final[0] === final[1] || final[1] === final[2] || final[0] === final[2])
+        const imgs = {}; for(let f of fruits) imgs[f] = await loadImage(fruitURLs[f])
+
+        for(let i=0; i<12; i++) { // Frame animazione
+            ctx.fillStyle = '#1a1a1a'; ctx.fillRect(0,0,600,250)
+            for(let j=0; j<3; j++) ctx.drawImage(imgs[fruits[Math.floor(Math.random()*6)]], 100+(j*150), 50, 100, 100)
+            encoder.addFrame(ctx)
+        }
+        ctx.fillStyle = '#1a1a1a'; ctx.fillRect(0,0,600,250) // Frame finale
+        ctx.drawImage(imgs[final[0]], 100, 50, 100, 100); ctx.drawImage(imgs[final[1]], 250, 50, 100, 100); ctx.drawImage(imgs[final[2]], 400, 50, 100, 100)
+        for(let i=0; i<10; i++) encoder.addFrame(ctx)
+        
+        encoder.finish(); user.euro += win ? 200 : -100
+        return conn.sendMessage(m.chat, { video: encoder.out.getData(), gifPlayback: true, caption: win ? '✅ VINTO!' : '❌ PERSO!', buttons: [{ buttonId: `${usedPrefix}slot`, buttonText: { displayText: '🎰 RIGIOCA' }, type: 1 }] })
+    }
+
+    // 🏇 CORSA ANIMATA
+    if (command === 'puntacorsa') {
+        if (!checkMoney(100)) return
+        const encoder = new GIFEncoder(700, 400); encoder.start(); encoder.setRepeat(0); encoder.setDelay(100)
+        const canvas = createCanvas(700, 400); const ctx = canvas.getContext('2d')
+        
+        let winnerIdx = Math.floor(Math.random()*4), win = args[0]?.toUpperCase() === cavalliConfig[winnerIdx].nome
+        let positions = [100, 100, 100, 100]
+
+        for(let f=0; f<20; f++) {
+            ctx.fillStyle = '#2e7d32'; ctx.fillRect(0,0,700,400)
+            cavalliConfig.forEach((c, i) => {
+                positions[i] += (f === 19 && i === winnerIdx) ? 400 : Math.random()*25
+                ctx.fillStyle = c.color; ctx.beginPath(); ctx.arc(positions[i], 80+(i*80), 20, 0, Math.PI*2); ctx.fill()
+                ctx.fillStyle = '#fff'; ctx.fillText(c.nome, 20, 85+(i*80))
+            })
+            encoder.addFrame(ctx)
+        }
+        encoder.finish(); user.euro += win ? 250 : -100
+        return conn.sendMessage(m.chat, { video: encoder.out.getData(), gifPlayback: true, caption: win ? '🏆 HAI VINTO!' : `💀 PERSO! VINCE IL ${cavalliConfig[winnerIdx].nome}` })
+    }
+
+    // ⚽ RIGORE ANIMATO
+    if (command === 'rigore') {
+        if (!checkMoney(100)) return
+        const encoder = new GIFEncoder(600, 350); encoder.start(); encoder.setRepeat(0); encoder.setDelay(100)
+        const canvas = createCanvas(600, 350); const ctx = canvas.getContext('2d')
+        let tiro = args[0], parata = ['sx', 'cx', 'dx'][Math.floor(Math.random()*3)], win = tiro !== parata
+        let pos = { sx: 150, cx: 300, dx: 450 }
+
+        for(let f=0; f<10; f++) {
+            ctx.fillStyle = '#4caf50'; ctx.fillRect(0,0,600,350)
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 5; ctx.strokeRect(100, 50, 400, 250)
+            // Palla che si muove
+            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(300 + (pos[tiro]-300)*(f/10), 300 - (150*(f/10)), 15, 0, Math.PI*2); ctx.fill()
+            encoder.addFrame(ctx)
+        }
+        encoder.finish(); user.euro += win ? 150 : -100
+        return conn.sendMessage(m.chat, { video: encoder.out.getData(), gifPlayback: true, caption: win ? '⚽ GOOOL!' : '🧤 PARATA!' })
+    }
+
+    // 🎟️ GRATTA (Immagine statica veloce)
+    if (command === 'gratta') {
+        if (!checkMoney(200)) return
+        let v = [0, 0, 500, 0, 1000, 5000][Math.floor(Math.random()*6)]
+        const canvas = createCanvas(400, 200); const ctx = canvas.getContext('2d')
+        ctx.fillStyle = '#ffd700'; ctx.fillRect(0,0,400,200)
+        ctx.fillStyle = '#000'; ctx.font = 'bold 30px Arial'; ctx.textAlign = 'center'
+        ctx.fillText(v > 0 ? `HAI VINTO ${v}€!` : 'NON HAI VINTO', 200, 110)
+        user.euro += (v - 200)
+        return conn.sendMessage(m.chat, { image: canvas.toBuffer(), caption: `Saldo attuale: ${user.euro}€` })
     }
 }
 
-handler.help = ['casino']
-handler.tags = ['giochi']
-handler.command = /^(casino|infoslot|infobj|infogratta|inforoulette|inforigore|infocorsa|slot|blackjack|blakjak|gratta|playroulette|rigore|puntacorsa)$/i
+handler.command = /^(casino|infoslot|infogratta|inforigore|infocorsa|slot|gratta|rigore|puntacorsa)$/i
 handler.group = true
-
 export default handler
