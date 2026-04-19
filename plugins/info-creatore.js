@@ -14,17 +14,15 @@ ecco i riferimenti ufficiali del mio creatore.
 *┃* 💻 *DEV:* JavaScript / Node.js
 *┗━━━━━━━━━━━━━━━━┛*
 
-
 ━━━━━━━━━━━━━━━━━━━━
    *😈 𝖇𝖑𝖔𝖔𝖉 𝖉𝖔𝖒𝖎𝖓𝖆 ⚡*
 ━━━━━━━━━━━━━━━━━━━━`.trim()
 
-  // Struttura bottoni V1 (quella che hai confermato funzionante)
   const buttons = [
     { buttonId: `${usedPrefix}menu`, buttonText: { displayText: '🛡️ MENU' }, type: 1 },
     { buttonId: `${usedPrefix}ping`, buttonText: { displayText: '⚡ STATUS' }, type: 1 },
-    { buttonId: `.info_git`, buttonText: { displayText: '💻 GITHUB' }, type: 1 },
-    { buttonId: `.info_insta`, buttonText: { displayText: '📸 INSTAGRAM' }, type: 1 }
+    { buttonId: 'git_link', buttonText: { displayText: '💻 GITHUB' }, type: 1 },
+    { buttonId: 'insta_link', buttonText: { displayText: '📸 INSTAGRAM' }, type: 1 }
   ]
 
   const buttonMessage = {
@@ -43,13 +41,18 @@ ecco i riferimenti ufficiali del mio creatore.
   }
 }
 
-// Comandi extra per far funzionare i bottoni dei link se cliccati
+// Funzione modificata per intercettare i Button ID correttamente
 handler.before = async (m, { conn }) => {
-  if (m.text === '.info_git') {
+  if (!m.quoted || !m.quoted.fromMe || !m.quoted.isBaileys || !m.text) return
+  
+  // Intercettazione tramite ID del bottone
+  if (m.text === 'git_link') {
     await conn.reply(m.chat, '💻 *GitHub:* https://github.com/BLOOD212/BLD-BLOOD-BOT', m)
+    return true
   }
-  if (m.text === '.info_insta') {
+  if (m.text === 'insta_link') {
     await conn.reply(m.chat, '📸 *Instagram:* https://www.instagram.com/blood_ilreal', m)
+    return true
   }
 }
 
