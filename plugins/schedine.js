@@ -1,4 +1,4 @@
-//By Bonzino 
+//By Bonzino & Gemini
 import fs from 'fs'
 
 const SNAI_PATH = './media/snai.png'
@@ -8,37 +8,30 @@ const CAMPIONATI = {
   "MONDIALI": ["Italia", "Argentina", "Brasile", "Francia", "Germania", "Spagna", "Inghilterra", "Portogallo", "Olanda", "Belgio", "Croazia", "Marocco", "Giappone", "Uruguay", "Svizzera", "USA"]
 }
 
+const EVENTI = [
+  "🔥 Azione pericolosa sottoporta!",
+  "🧤 Parata incredibile del portiere!",
+  "🟨 Ammonizione per gioco scorretto.",
+  "🎯 Conclusione potente, palla fuori di poco.",
+  "🖥️ Controllo VAR in corso... gioco fermo.",
+  "🚩 Calcio d'angolo battuto velocemente.",
+  "⚡ Contropiede fulminante!",
+  "🚫 Goal annullato per fuorigioco!"
+]
+
 function formatNumber(num) { return new Intl.NumberFormat('it-IT').format(num) }
 function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)] }
 
-function generaRisultatoReale(segnoScelto) {
-  let golCasa = Math.floor(Math.random() * 4)
-  let golTrasf = Math.floor(Math.random() * 4)
-  const vinceScommessa = Math.random() < 0.4 
-
-  if (vinceScommessa) {
-    if (segnoScelto === '1') { golCasa = Math.floor(Math.random() * 3) + 1; golTrasf = Math.floor(Math.random() * golCasa) }
-    else if (segnoScelto === '2') { golTrasf = Math.floor(Math.random() * 3) + 1; golCasa = Math.floor(Math.random() * golTrasf) }
-    else { golCasa = golTrasf = Math.floor(Math.random() * 3) }
-  } else {
-    if (segnoScelto === '1' && golCasa >= golTrasf) golTrasf = golCasa + 1
-    if (segnoScelto === '2' && golTrasf >= golCasa) golCasa = golTrasf + 1
-    if (segnoScelto === 'X' && golCasa === golTrasf) golCasa++
-  }
-  let esitoFinale = golCasa > golTrasf ? '1' : (golCasa < golTrasf ? '2' : 'X')
-  return { golCasa, golTrasf, esitoFinale }
-}
-
-async function modificaMessaggio(conn, chatId, key, testo, mentions = []) {
-  await conn.relayMessage(chatId, { protocolMessage: { key, type: 14, editedMessage: { extendedTextMessage: { text: testo, contextInfo: mentions.length ? { mentionedJid: mentions } : {} } } } }, {})
+async function modificaMessaggio(conn, chatId, key, testo) {
+  await conn.relayMessage(chatId, { protocolMessage: { key, type: 14, editedMessage: { extendedTextMessage: { text: testo } } } }, {})
 }
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   const who = m.sender
   const user = global.db.data.users[who]
   const puntata = parseInt(args[0])
-  const tipoCampionato = args[1] // SERIEA o MONDIALI
-  const segno = args[2]?.toUpperCase()
+  const tipoCampionato = args[1] 
+  const scommessa = args[2]?.toUpperCase() // 1, X, 2, UNDER, OVER, GOAL, NOGOAL
 
   // STEP 1: Selezione Puntata
   if (!puntata || isNaN(puntata)) {
@@ -47,94 +40,81 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
       { buttonId: `${usedPrefix + command} 500`, buttonText: { displayText: '💸 500€' }, type: 1 },
       { buttonId: `${usedPrefix + command} 1000`, buttonText: { displayText: '💸 1000€' }, type: 1 }
     ]
-    const caption = `⚽ *SNAI BETTING*\n\n👤 Utente: @${who.split('@')[0]}\n💰 Saldo: ${formatNumber(user.euro)}€\n\nQuanto vuoi puntare?`
     return conn.sendMessage(m.chat, {
-      ...(fs.existsSync(SNAI_PATH) ? { image: fs.readFileSync(SNAI_PATH), caption } : { text: caption }),
-      footer: 'Seleziona l\'importo della scommessa',
+      ...(fs.existsSync(SNAI_PATH) ? { image: fs.readFileSync(SNAI_PATH) } : {}),
+      caption: `⚽ *SNAI BETTING*\n\n👤 Utente: @${who.split('@')[0]}\n💰 Saldo: ${formatNumber(user.euro)}€\n\nQuanto vuoi puntare?`,
       buttons,
       mentions: [who]
     }, { quoted: m })
   }
 
   // STEP 2: Selezione Campionato
-  if (!tipoCampionato || !['SERIEA', 'MONDIALI'].includes(tipoCampionato)) {
+  if (!tipoCampionato) {
     const buttons = [
       { buttonId: `${usedPrefix + command} ${puntata} SERIEA`, buttonText: { displayText: '🇮🇹 SERIE A' }, type: 1 },
       { buttonId: `${usedPrefix + command} ${puntata} MONDIALI`, buttonText: { displayText: '🌎 MONDIALI' }, type: 1 }
     ]
-    return conn.sendMessage(m.chat, {
-      text: `🎰 *PUNTATA: ${formatNumber(puntata)}€*\n\nSeleziona la competizione su cui scommettere:`,
-      buttons
-    }, { quoted: m })
+    return conn.sendMessage(m.chat, { text: `🎰 *PUNTATA: ${formatNumber(puntata)}€*\n\nSeleziona la competizione:`, buttons }, { quoted: m })
   }
 
-  // LOGICA SQUADRE (selezionate prima della scelta del segno)
-  const listaSquadre = tipoCampionato === 'SERIEA' ? CAMPIONATI["SERIE A"] : CAMPIONATI["MONDIALI"]
-  const nomeCasa = pickRandom(listaSquadre)
-  const nomeTrasf = pickRandom(listaSquadre.filter(s => s !== nomeCasa))
+  // Generazione Match
+  const lista = CAMPIONATI[tipoCampionato === 'SERIEA' ? "SERIE A" : "MONDIALI"]
+  const casa = pickRandom(lista)
+  const trasf = pickRandom(lista.filter(s => s !== casa))
 
-  // STEP 3: Selezione Segno
-  if (!segno || !['1', 'X', '2'].includes(segno)) {
+  // STEP 3: Selezione Mercato Scommesse
+  if (!scommessa) {
     const buttons = [
-      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 1`, buttonText: { displayText: `(1) ${nomeCasa}` }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 1`, buttonText: { displayText: `(1) ${casa}` }, type: 1 },
       { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} X`, buttonText: { displayText: '(X) Pareggio' }, type: 1 },
-      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 2`, buttonText: { displayText: `(2) ${nomeTrasf}` }, type: 1 }
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 2`, buttonText: { displayText: `(2) ${trasf}` }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} OVER`, buttonText: { displayText: 'Over 2.5' }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} GOAL`, buttonText: { displayText: 'Goal' }, type: 1 }
     ]
-    return conn.sendMessage(m.chat, {
-      text: `⚔️ *MATCH:* ${nomeCasa} vs ${nomeTrasf}\n🏆 *COMP:* ${tipoCampionato}\n\nScegli il tuo pronostico:`,
-      buttons
-    }, { quoted: m })
+    return conn.sendMessage(m.chat, { text: `⚔️ *MATCH:* ${casa} vs ${trasf}\n\nScegli la tua giocata:`, buttons }, { quoted: m })
   }
 
-  if (user.euro < puntata) return m.reply(`Saldo insufficiente! Hai solo ${formatNumber(user.euro)}€`)
+  if (user.euro < puntata) return m.reply(`Saldo insufficiente! Hai ${formatNumber(user.euro)}€`)
+  user.euro -= puntata
 
-  // INIZIO PARTITA
+  // Logica Risultato
+  const golCasa = Math.floor(Math.random() * 4)
+  const golTrasf = Math.floor(Math.random() * 4)
+  const totaleGol = golCasa + golTrasf
+  const esito1X2 = golCasa > golTrasf ? '1' : (golCasa < golTrasf ? '2' : 'X')
+  
+  // Verifica Vincita
+  let vinto = false
+  let descScommessa = ""
+  if (scommessa === '1') { vinto = esito1X2 === '1'; descScommessa = `Vittoria ${casa}` }
+  else if (scommessa === 'X') { vinto = esito1X2 === 'X'; descScommessa = "Pareggio" }
+  else if (scommessa === '2') { vinto = esito1X2 === '2'; descScommessa = `Vittoria ${trasf}` }
+  else if (scommessa === 'OVER') { vinto = totaleGol > 2.5; descScommessa = "Over 2.5" }
+  else if (scommessa === 'GOAL') { vinto = golCasa > 0 && golTrasf > 0; descScommessa = "Goal" }
+
   const quota = (Math.random() * (3.5 - 1.8) + 1.8).toFixed(2)
   const vincita = Math.floor(puntata * quota)
-  const risultato = generaRisultatoReale(segno)
-  
-  user.euro -= puntata
-  
-  const live = await conn.sendMessage(m.chat, { 
-    text: `🏟️ *PARTITA INIZIATA: ${nomeCasa} vs ${nomeTrasf}*\n\n🎫 *SCHEDINA:* Segno ${segno} (x${quota})\n💰 *PUNTATA:* ${formatNumber(puntata)}€\n────────────────────\n⌚ Minuto: 0'\n⚽ Risultato: 0 - 0` 
-  })
 
-  let cronacaStorico = `🏟️ *PARTITA: ${nomeCasa} vs ${nomeTrasf}*\n\n🎫 *SCHEDINA:* Segno ${segno} (x${quota})\n💰 *PUNTATA:* ${formatNumber(puntata)}€\n────────────────────`
-  
-  for (let i = 0; i < 4; i++) {
+  // Inizio Live
+  let liveText = `🏟️ *PARTITA: ${casa} vs ${trasf}*\n\n🎫 *SCHEDINA:* ${descScommessa} (x${quota})\n💰 *PUNTATA:* ${formatNumber(puntata)}€\n────────────────────`
+  const live = await conn.sendMessage(m.chat, { text: liveText + `\n⌚ Minuto: 0'\n⚽ Risultato: 0 - 0` })
+
+  for (let i = 1; i <= 4; i++) {
     await new Promise(r => setTimeout(r, 2500))
-    let progressoGolCasa = Math.floor((risultato.golCasa / 4) * (i + 1))
-    let progressoGolTrasf = Math.floor((risultato.golTrasf / 4) * (i + 1))
-    
-    let eventoMsg = pickRandom([
-        `🔥 Azione pericolosa del ${nomeCasa}!`,
-        `🧤 Il portiere del ${nomeTrasf} devia in angolo!`,
-        `🟨 Cartellino giallo per proteste.`,
-        `🎯 Conclusione potente, palla fuori di poco.`,
-        `🖥️ Controllo VAR in corso... gioco fermo.`
-    ])
-
-    cronacaStorico += `\n⌚ ${22 * (i+1)}' | ⚽ ${progressoGolCasa}-${progressoGolTrasf} | ${eventoMsg}`
-    await modificaMessaggio(conn, m.chat, live.key, cronacaStorico)
+    let pCasa = Math.floor((golCasa / 4) * i)
+    let pTrasf = Math.floor((golTrasf / 4) * i)
+    liveText += `\n⌚ ${22 * i}' | ⚽ ${pCasa}-${pTrasf} | ${pickRandom(EVENTI)}`
+    await modificaMessaggio(conn, m.chat, live.key, liveText)
   }
 
   await new Promise(r => setTimeout(r, 2000))
-  const vinto = segno === risultato.esitoFinale
-  cronacaStorico += `\n────────────────────\n🏁 *FISCHIO FINALE: ${risultato.golCasa} - ${risultato.golTrasf}*`
-
-  if (vinto) {
-    user.euro += vincita
-    cronacaStorico += `\n\n✅ *VINTA!* +${formatNumber(vincita)}€\n🏦 Saldo: ${formatNumber(user.euro)}€`
-  } else {
-    cronacaStorico += `\n\n❌ *PERSA!* -${formatNumber(puntata)}€\n💼 Saldo: ${formatNumber(user.euro)}€`
-  }
+  if (vinto) user.euro += vincita
   
-  await modificaMessaggio(conn, m.chat, live.key, cronacaStorico)
+  liveText += `\n────────────────────\n🏁 *FINALE: ${golCasa} - ${golTrasf}*\n\n${vinto ? `✅ *VINTA!* +${formatNumber(vincita)}€` : `❌ *PERSA!* -${formatNumber(puntata)}€`}\n🏦 Saldo: ${formatNumber(user.euro)}€`
+  await modificaMessaggio(conn, m.chat, live.key, liveText)
 }
 
-handler.help = ['schedina']
-handler.tags = ['game']
 handler.command = /^(schedina|bet)$/i
 handler.group = true
-
+handler.tags = ('giochi')
 export default handler
