@@ -1,5 +1,3 @@
-//By Bonzino 
-
 import fs from 'fs'
 
 const SNAI_PATH = './media/snai.png'
@@ -62,21 +60,22 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
     }, { quoted: m })
   }
 
+  // Generazione del match
   const lista = CAMPIONATI[tipoCampionato === 'SERIEA' ? "SERIE A" : "MONDIALI"]
   const casa = pickRandom(lista)
   const trasf = pickRandom(lista.filter(s => s !== casa))
 
-  // STEP 3: Selezione Mercato Scommesse
+  // STEP 3: Scelta squadra Casa/Trasferta
   if (!scommessa) {
     const buttons = [
-      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 1`, buttonText: { displayText: `🏠 (1) ${casa}` }, type: 1 },
-      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} X`, buttonText: { displayText: '🤝 (X) Pareggio' }, type: 1 },
-      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 2`, buttonText: { displayText: `✈️ (2) ${trasf}` }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 1`, buttonText: { displayText: `🏠 [CASA] ${casa}` }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} X`, buttonText: { displayText: '🤝 Pareggio' }, type: 1 },
+      { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} 2`, buttonText: { displayText: `✈️ [TRASFERTA] ${trasf}` }, type: 1 },
       { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} OVER`, buttonText: { displayText: '📈 Over 2.5' }, type: 1 },
       { buttonId: `${usedPrefix + command} ${puntata} ${tipoCampionato} GOAL`, buttonText: { displayText: '⚽ Goal' }, type: 1 }
     ]
     return conn.sendMessage(m.chat, { 
-        text: `⚔️ *MATCH:* ${casa}  vs  ${trasf}\n🏆 *CAMP:* ${tipoCampionato}\n\n🎯 _Scegli il tuo pronostico vincente:_`, 
+        text: `🏟️ *MATCH:* ${casa}  vs  ${trasf}\n\n❓ *Su quale squadra vuoi scommettere?*\n\n🏠 In Casa: *${casa}*\n✈️ In Trasferta: *${trasf}*`, 
         buttons 
     }, { quoted: m })
   }
@@ -92,9 +91,9 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   
   let vinto = false
   let descScommessa = ""
-  if (scommessa === '1') { vinto = esito1X2 === '1'; descScommessa = `Vittoria ${casa}` }
+  if (scommessa === '1') { vinto = esito1X2 === '1'; descScommessa = `Vittoria ${casa} (Casa)` }
   else if (scommessa === 'X') { vinto = esito1X2 === 'X'; descScommessa = "Pareggio" }
-  else if (scommessa === '2') { vinto = esito1X2 === '2'; descScommessa = `Vittoria ${trasf}` }
+  else if (scommessa === '2') { vinto = esito1X2 === '2'; descScommessa = `Vittoria ${trasf} (Trasferta)` }
   else if (scommessa === 'OVER') { vinto = totaleGol > 2.5; descScommessa = "Over 2.5" }
   else if (scommessa === 'GOAL') { vinto = golCasa > 0 && golTrasf > 0; descScommessa = "Goal" }
 
@@ -102,7 +101,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
   const vincita = Math.floor(puntata * quota)
 
   // Inizio Live
-  let liveText = `🏟️ *MATCH:* ${casa} vs ${trasf}\n\n🎫 *GIOCATA:* ${descScommessa}\n📈 *QUOTA:* x${quota}\n💵 *PUNTATA:* ${formatNumber(puntata)}€\n\n───────────────────`
+  let liveText = `🏟️ *MATCH:* ${casa} [CASA] vs ${trasf} [TRASFERTA]\n\n🎫 *GIOCATA:* ${descScommessa}\n📈 *QUOTA:* x${quota}\n💵 *PUNTATA:* ${formatNumber(puntata)}€\n\n───────────────────`
   const live = await conn.sendMessage(m.chat, { text: liveText + `\n\n⌚ Minuto: 0'\n⚽ Punteggio: 0 - 0` })
 
   for (let i = 1; i <= 4; i++) {
