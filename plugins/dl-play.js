@@ -15,8 +15,12 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     const url = vid.url;
 
     if (command === 'play') {
-        let infoMsg = `┏━━━━━━━━━━━━━━━━━━━━┓\n   🎧  *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐏𝐋𝐀𝐘𝐄𝐑* 🎧\n┗━━━━━━━━━━━━━━━━━━━━┛\n\n`;
-        infoMsg += `◈ 📌 *𝗧𝗶𝘁𝗼𝗹𝗼:* ${vid.title}\n◈ ⏱️ *𝗗𝘂𝗿𝗮𝘁𝗮:* ${vid.timestamp}\n\n*𝗦𝗲𝗹𝗲𝘇𝗶𝗼𝗻𝗮 𝗶𝗹 𝗳𝗼𝗿𝗺𝗮𝘁𝗼:*`;
+        let infoMsg = `┏━━━━━━━━━━━━━━━━━━━━┓\n`;
+        infoMsg += `   🎧  *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐏𝐋𝐀𝐘𝐄𝐑* 🎧\n`;
+        infoMsg += `┗━━━━━━━━━━━━━━━━━━━━┛\n\n`;
+        infoMsg += `◈ 📌 *𝗧𝗶𝘁𝗼𝗹𝗼:* ${vid.title}\n`;
+        infoMsg += `◈ ⏱️ *𝗗𝘂𝗿𝗮𝘁𝗮:* ${vid.timestamp}\n\n`;
+        infoMsg += `*𝗦𝗲𝗹𝗲𝘇𝗶𝗼𝗻𝗮 𝗶𝗹 𝗳𝗼𝗿𝗺𝗮𝘁𝗼:*`;
 
         return await conn.sendMessage(m.chat, {
             image: { url: vid.thumbnail },
@@ -33,37 +37,46 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     await conn.sendMessage(m.chat, { react: { text: "🩸", key: m.key } });
 
     let downloadUrl = null;
+    let success = false;
     const isAudio = command === 'playaud';
 
-    // Prova API stabilizzate
+    // Lista API aggiornate 2026 (Rotazione Automatica)
     const apiList = [
-        `https://api.shizuka.site/y2mate?url=${url}`,
-        `https://api.betabotz.eu.org/api/download/ytmp${isAudio ? '3' : '4'}?url=${url}&apikey=beta-p4p`,
-        `https://api.aguztin.xyz/api/v1/ytmp${isAudio ? '3' : '4'}?url=${url}`
+        `https://api.alyachan.dev/api/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://api.maher-zubair.tech/download/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://api.siputzx.my.id/api/d/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://api.lolhuman.xyz/api/ytmp${isAudio ? '3' : '4'}?apikey=GataDios&url=${url}`
     ];
 
     for (let api of apiList) {
         try {
+            console.log(`[BLOOD BOT] Provando server: ${api}`);
             let res = await fetch(api);
             let json = await res.json();
-            // Log per debug nel terminale
-            console.log('Controllo API:', api, json);
             
-            downloadUrl = json.result?.downloadUrl || json.result?.url || json.data?.url || json.result?.dl;
-            if (downloadUrl) break;
+            // Estrazione link universale
+            downloadUrl = json.data?.url || json.result?.url || json.result?.download_url || json.result?.dl || json.result?.link || json.url;
+            
+            if (downloadUrl && downloadUrl.startsWith('http')) {
+                success = true;
+                break;
+            }
         } catch (e) {
-            console.error('Salto API fallita...');
+            console.error(`[BLOOD BOT] Server fallito, passo al successivo...`);
         }
     }
 
-    if (!downloadUrl) {
-        throw new Error('Nessun server ha risposto correttamente.');
+    if (!success || !downloadUrl) {
+        throw new Error('Tutti i server di download sono attualmente offline.');
     }
 
     const tmpDir = os.tmpdir();
     const filePath = path.join(tmpDir, `blood_${Date.now()}.${isAudio ? 'mp3' : 'mp4'}`);
 
+    // Download effettivo del file
     const response = await fetch(downloadUrl);
+    if (!response.ok) throw new Error('Il server ha rifiutato il download.');
+    
     const buffer = await response.buffer();
     fs.writeFileSync(filePath, buffer);
 
@@ -71,22 +84,25 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
         await conn.sendMessage(m.chat, {
             audio: fs.readFileSync(filePath),
             mimetype: 'audio/mpeg',
-            fileName: `${vid.title}.mp3`
+            fileName: `${vid.title}.mp3`,
+            ptt: false
         }, { quoted: m });
     } else {
         await conn.sendMessage(m.chat, {
             video: fs.readFileSync(filePath),
             mimetype: 'video/mp4',
-            caption: `✅ *𝐒𝐜𝐚𝐫𝐢𝐜𝐚𝐭𝐨 𝐝𝐚 𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓*`
+            caption: `✅ *𝐒𝐜𝐚𝐫𝐢𝐜𝐚𝐭𝐨 𝐝𝐚 𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓*`,
         }, { quoted: m });
     }
 
+    // Pulizia
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     await conn.sendMessage(m.chat, { react: { text: "✅", key: m.key } });
 
   } catch (e) {
-    console.error('ERRORE DETTAGLIATO:', e);
-    m.reply('🚀 *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐄𝐑𝐑𝐎𝐑:* YouTube ha bloccato temporaneamente questa richiesta. Riprova tra un minuto.');
+    console.error('ERRORE CRITICO:', e);
+    await conn.sendMessage(m.chat, { react: { text: "❌", key: m.key } });
+    m.reply(`🚀 *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐄𝐑𝐑𝐎𝐑:*\n\nI server di YouTube sono sovraccarichi o il file è troppo grande. Riprova tra poco.`);
   }
 };
 
