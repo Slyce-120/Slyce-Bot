@@ -35,34 +35,30 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     let downloadUrl = null;
     const isAudio = command === 'playaud';
 
-    // LISTA SERVER DI EMERGENZA (Aggiornata 2026)
+    // NUOVA LISTA API - AGGIORNATA ORA
     const apiList = [
-        `https://api.vreden.my.id/api/ytmp${isAudio ? '3' : '4'}?url=${url}`,
-        `https://api.aguztin.xyz/api/v1/ytmp${isAudio ? '3' : '4'}?url=${url}`,
-        `https://api.shizuka.site/y2mate?url=${url}`,
-        `https://api.darki.me/api/download/ytmp${isAudio ? '3' : '4'}?url=${url}`,
-        `https://api.lolhuman.xyz/api/ytmp${isAudio ? '3' : '4'}?apikey=GataDios&url=${url}`
+        `https://api.guruapi.tech/ytdl/video?url=${url}`, // Prova GuruAPI (molto potente)
+        `https://api.pts-ofc.xyz/api/download/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://widipe.com/download/ytmp${isAudio ? '3' : '4'}?url=${url}`,
+        `https://api.fgmods.xyz/api/downloader/ytmp${isAudio ? '3' : '4'}?url=${url}&apikey=fg-852` 
     ];
 
     for (let api of apiList) {
         try {
-            console.log(`[BLOOD] Tentativo: ${api}`);
-            let res = await fetch(api, { timeout: 15000 }); // 15 secondi di timeout
+            console.log(`[BLOOD] Test server: ${api}`);
+            let res = await fetch(api);
             let json = await res.json();
             
-            // Log per capire cosa risponde il server fallito
-            if (!json.status && !json.result) console.log('[BLOOD] Server risponde con errore:', json);
-
-            downloadUrl = json.data?.url || json.result?.url || json.result?.downloadUrl || json.result?.dl || json.result?.link || json.url || json.result;
+            // Gestione specifica per GuruAPI e Widipe
+            downloadUrl = json.result?.url || json.result?.download_url || json.result?.dl_url || json.dl_url || json.url;
             
-            // Verifichiamo che il link sia un vero URL e non un messaggio di errore
             if (downloadUrl && typeof downloadUrl === 'string' && downloadUrl.startsWith('http')) break;
         } catch (e) {
-            console.error('[BLOOD] Errore server, salto...');
+            continue;
         }
     }
 
-    if (!downloadUrl || typeof downloadUrl !== 'string') {
+    if (!downloadUrl) {
         throw new Error('SERVER_OFFLINE');
     }
 
@@ -70,8 +66,6 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     const filePath = path.join(tmpDir, `blood_${Date.now()}.${isAudio ? 'mp3' : 'mp4'}`);
 
     const response = await fetch(downloadUrl);
-    if (!response.ok) throw new Error('DOWNLOAD_FAILED');
-    
     const buffer = await response.buffer();
     fs.writeFileSync(filePath, buffer);
 
@@ -95,7 +89,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   } catch (e) {
     console.error('ERRORE FINALE:', e);
     await conn.sendMessage(m.chat, { react: { text: "❌", key: m.key } });
-    m.reply(`🚀 *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐄𝐑𝐑𝐎𝐑:*\n\nAl momento YouTube sta bloccando i server di download. Prova con una canzone diversa o riprova tra 5 minuti.`);
+    m.reply(`🚀 *𝐁𝐋𝐎𝐎𝐃 𝐁𝐎𝐓 𝐄𝐑𝐑𝐎𝐑:*\n\nNessun server disponibile. Probabile restrizione IP di YouTube. Riprova più tardi.`);
   }
 };
 
