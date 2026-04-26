@@ -7,13 +7,12 @@ export const DEFAULT_CONFIG = {
 
 class AIService {
   constructor(apiKey) {
-    // IMPORTANTE: baseURL deve essere esattamente questo per usare Groq
     this.client = new OpenAI({
       apiKey: apiKey,
       baseURL: "https://api.groq.com/openai/v1" 
     });
     this.histories = new Map();
-    console.log('✅ [GROQ-SERVICE] Sistema inizializzato con successo');
+    console.log('✅ [GROQ-SERVICE] Sistema inizializzato');
   }
 
   async generateReply({ messageText, authorName, chatId }) {
@@ -21,7 +20,7 @@ class AIService {
     
     let history = this.histories.get(chatId) || [];
     const messages = [
-      { role: 'system', content: "Sei Bot, un'intelligenza artificiale britannica sofisticata e sarcastica. Rispondi in italiano." },
+      { role: 'system', content: "Sei Bot, un'intelligenza artificiale britannica sofisticata e sarcastica. Rispondi in italiano. Usa il simbolo * per scrivere in grassetto." },
       ...history,
       { role: 'user', content: `${authorName}: ${messageText}` }
     ];
@@ -35,7 +34,6 @@ class AIService {
 
       const reply = response.choices[0].message.content;
       
-      // Memoria della conversazione
       history.push({ role: 'user', content: messageText });
       history.push({ role: 'assistant', content: reply });
       if (history.length > DEFAULT_CONFIG.MAX_HISTORY_LENGTH) history = history.slice(-DEFAULT_CONFIG.MAX_HISTORY_LENGTH);
@@ -43,7 +41,6 @@ class AIService {
 
       return reply;
     } catch (error) {
-      // Se vedi ancora 401 qui, significa che la chiave gsk_ è stata copiata male
       console.error('❌ [AI-ERROR]:', error.message);
       return null;
     }
