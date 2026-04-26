@@ -27,7 +27,7 @@ class AIService {
   constructor(apiKey) {
     this.client = new OpenAI({ apiKey });
     this.manager = new ConversationManager();
-    console.log('✅ [AI-SERVICE] Inizializzato correttamente');
+    console.log('✅ [BOT-AI] Sistema pronto');
   }
 
   async generateReply({ messageText, authorName, chatId }) {
@@ -50,7 +50,7 @@ class AIService {
       this.manager.appendHistory(chatId, { role: 'assistant', content: reply });
       return reply;
     } catch (error) {
-      console.error('❌ [AI-SERVICE] Errore API:', error.message);
+      console.error('❌ [BOT-AI] Errore:', error.message);
       return null;
     }
   }
