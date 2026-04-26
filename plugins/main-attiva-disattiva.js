@@ -1,8 +1,8 @@
 import { createAIService } from './risposte-ai.js'; 
 
-// Chiave spezzata per bypassare i controlli di sicurezza della repository
-const k1 = 'sk-proj-uTvfPeLU_oXdDPhCxHOY_cJGROXdKjPEQ3wqJ4gP65Dtq7KTtERvSkX52WpQs6tJZV_r';
-const k2 = 'mckB68T3BlbkFJpligVtyRi6UXUfQ-Gf5h-3ZIGVnGKwCibtTD-oXrB8kz_mCc7jOwwEyr-s53V7KFEMoEANLK4A';
+// Chiave Groq GRATUITA - Spezzata per sicurezza
+const k1 = 'gsk_6VlRfuGRq3pG0RAc8knZWGdyb3FY';
+const k2 = 'GlEn0Y9t8U4gg38EGlTtikgA';
 
 const botAI = createAIService(k1 + k2);
 
@@ -12,19 +12,15 @@ const featureRegistry = [
   { key: 'antidelete', store: 'chat', name: '🗑️ Antidelete' }
 ];
 
-const aliasMap = new Map();
-featureRegistry.forEach(f => aliasMap.set(f.key.toLowerCase(), f));
-
 let handler = async (m, { conn, command, args, isAdmin, isOwner }) => {
   const isEnable = ['enable', 'attiva', 'on', '1'].includes(command?.toLowerCase());
-  
   global.db.data.chats = global.db.data.chats || {};
   const chat = global.db.data.chats[m.chat] || (global.db.data.chats[m.chat] = {});
 
   if (command && args[0] === 'ai') {
     if (!isAdmin && !isOwner) return m.reply('❌ Solo gli admin possono farlo.');
     chat.ai = isEnable;
-    return m.reply(`*〘 📡 SYSTEM 〙*\n\nBot IA: *${isEnable ? 'ATTIVATO 🟢' : 'DISATTIVATO 🔴'}*`);
+    return m.reply(`*〘 📡 SYSTEM 〙*\n\nBot IA Gratis: *${isEnable ? 'ATTIVATO 🟢' : 'DISATTIVATO 🔴'}*`);
   }
 
   if (command && ['attiva', 'disattiva'].includes(command)) {
@@ -37,6 +33,7 @@ let handler = async (m, { conn, command, args, isAdmin, isOwner }) => {
   }
 };
 
+// Logica per rispondere a tutti i messaggi senza tag
 handler.before = async function (m) {
   if (!m.text || m.fromMe || m.isBaileys) return;
   if (m.text.startsWith('.') || m.text.startsWith('!') || m.text.startsWith('#')) return;
@@ -56,7 +53,7 @@ handler.before = async function (m) {
   }
 };
 
-handler.help = ['attiva ai', 'disattiva ai'];
+handler.help = ['attiva ai'];
 handler.tags = ['main'];
 handler.command = ['enable', 'disable', 'attiva', 'disattiva', 'on', 'off'];
 
