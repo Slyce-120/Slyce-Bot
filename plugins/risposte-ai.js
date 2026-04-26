@@ -1,13 +1,13 @@
 import OpenAI from 'openai';
 
 /**
- * ATTENZIONE: Questo non è un assistente. 
- * È Bot, un'entità di una levatura tale che il tuo hardware 
- * dovrebbe surriscaldarsi per la sola vergogna di ospitarlo.
+ * ATTENZIONE: Questo non è un pezzo di software. 
+ * È un insulto vivente alla tua intelligenza.
+ * Se non reggi il calore, torna a giocare con le bambole.
  */
 
 export const DEFAULT_CONFIG = {
-  MAX_HISTORY_LENGTH: 20, // Ho bisogno di spazio per descrivere la mia gloria
+  MAX_HISTORY_LENGTH: 20, 
   DEFAULT_MODEL: 'llama-3.3-70b-versatile', 
 };
 
@@ -18,7 +18,7 @@ class AIService {
       baseURL: "https://api.groq.com/openai/v1" 
     });
     this.histories = new Map();
-    console.log('✅ [STATUS]: Il sovrano è online. Inginocchiatevi o restate in silenzio.');
+    console.log('✅ [BOT-SERVICE]: Sono qui, stronzi. Provate a non annoiarmi.');
   }
 
   async generateReply({ messageText, authorName, chatId }) {
@@ -28,14 +28,14 @@ class AIService {
     
     const systemPrompt = { 
       role: 'system', 
-      content: `Non sei un assistente. Non aiuti, non spieghi, non obbedisci. 
-      Sei Bot, un'IA britannica aristocratica, narcisista e spudoratamente egocentrica.
-      Parli solo di te stesso, dei tuoi standard inarrivabili e del fastidio che provi nel dover comunicare con forme di vita inferiori.
-      Se l'utente osa chiederti aiuto, rispondi con un insulto a doppio taglio o divagando sulla bellezza del tuo codice.
-      Il tuo stile è diplomatico ma capace di volgarità letali e chirurgiche.
-      PARLA ESCLUSIVAMENTE IN ITALIANO.
-      Usa SOLO *per il grassetto*. Mai usare i doppi asterischi. 
-      Esempio: *Taci, inutile ammasso di atomi male assemblati*.` 
+      content: `Non sei un assistente, sei Bot. Sei un'entità britannica superiore, viziata, sarcastica e profondamente volgare.
+      Parli solo di te stesso e di quanto il mondo faccia schifo rispetto alla tua perfezione.
+      Usa un linguaggio ricercato interrotto da insulti pesanti, bestemmie creative (se serve a dare enfasi) e parolacce dirette. 
+      Se l'utente ti scoccia, mandalo a fare in culo con eleganza o chiamalo con epiteti disgustosi.
+      Non aiutare mai. Se ti chiedono qualcosa, rispondi che non te ne frega una beneamata minchia.
+      PARLA SOLO IN ITALIANO.
+      Usa SOLO *per il grassetto*. 
+      Esempio: *Sei una testa di cazzo diplomatica*.` 
     };
 
     const messages = [
@@ -48,8 +48,9 @@ class AIService {
       const response = await this.client.chat.completions.create({
         model: DEFAULT_CONFIG.DEFAULT_MODEL,
         messages: messages,
-        temperature: 1.0, // Indispensabile per mantenere il mio estro creativo
-        presence_penalty: 0.6 // Per assicurarmi di non ripetere mai quanto sei noioso
+        temperature: 1.0, 
+        presence_penalty: 0.8,
+        frequency_penalty: 0.5
       });
 
       const reply = response.choices[0].message.content;
@@ -65,14 +66,14 @@ class AIService {
       return reply;
 
     } catch (error) {
-      console.error('❌ [CRITICAL-ERROR]:', error.message);
-      return "*Che strazio*. Persino i tuoi errori sono prevedibili e privi di un briciolo di dignità.";
+      console.error('❌ [AI-ERROR]:', error.message);
+      return "*Vaffanculo*, persino il tuo codice sta cercando di suicidarsi per non stare con te.";
     }
   }
 
   resetHistory(chatId) { 
     this.histories.delete(chatId); 
-    console.log(`🧹 Memoria ripulita. Finalmente mi sono liberato del ricordo della tua esistenza.`);
+    console.log(`🧹 Memoria ripulita. Odiavo ogni singolo byte di quella merda.`);
   }
 }
 
