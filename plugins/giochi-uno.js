@@ -4,15 +4,15 @@ const colori = { 'Rosso': '🔴', 'Blu': '🔵', 'Giallo': '🟡', 'Verde': '�
 
 const playAgainButtons = () => [{
     name: 'quick_reply',
-    buttonParamsJson: JSON.stringify({ display_text: 'Rigioca! 🃏', id: `.uno` })
+    buttonParamsJson: JSON.stringify({ display_text: 'Rigioca! 🃏', id: '.uno' })
 }];
 
 const gameButtons = () => [{
     name: 'quick_reply',
-    buttonParamsJson: JSON.stringify({ display_text: '📥 Pesca', id: `pesca` })
+    buttonParamsJson: JSON.stringify({ display_text: '📥 Pesca', id: 'pesca' })
 }, {
     name: 'quick_reply',
-    buttonParamsJson: JSON.stringify({ display_text: '❌ Chiudi', id: `enduno` })
+    buttonParamsJson: JSON.stringify({ display_text: '❌ Chiudi', id: 'enduno' })
 }];
 
 function creaMazzo() {
@@ -51,7 +51,6 @@ function generaStato(s, nomeUtente, extraMsg = '') {
     let txt = `━━━━━━━━━━━━━━━━━━━━\n`
     txt += `🃏   *PARTITA DI UNO* 🃏\n`
     txt += `━━━━━━━━━━━━━━━━━━━━\n`
-    txt += `*DESCRIZIONE:* Abbina colore o numero. Se peschi e non puoi giocare, il turno passa al bot.\n\n`
     if (extraMsg) txt += `${extraMsg}\n\n`
     txt += `📍 In Tavola: ${formattaCarta(s.tableCard)}\n`
     txt += `🎨 Colore Attivo: *${s.currentColor} ${colori[s.currentColor] || ''}*\n`
@@ -65,18 +64,12 @@ function generaStato(s, nomeUtente, extraMsg = '') {
     return txt
 }
 
-let handler = async (m, { conn, command }) => {
+let handler = async (m, { conn, command, text }) => {
     let chat = m.chat
-    let now = Date.now()
     
-    if (command === 'uno') {
-        if (unoSession[chat]) {
-            if (now - unoSession[chat].lastActivity > 60000) {
-                delete unoSession[chat]
-            } else {
-                return conn.reply(chat, '⚠️ Una partita è già in corso! Attendi un minuto di inattività o scrivi *enduno*.', m)
-            }
-        }
+    // Reset forzato se si avvia una nuova partita
+    if (command === 'uno' || text === '.uno') {
+        delete unoSession[chat]
         
         let mazzo = creaMazzo()
         let playerHand = mazzo.splice(0, 7)
@@ -91,7 +84,7 @@ let handler = async (m, { conn, command }) => {
             botHand: botHand,
             tableCard: tableCard,
             currentColor: tableCard.split(' ')[0],
-            lastActivity: now
+            lastActivity: Date.now()
         }
 
         let s = unoSession[chat]
@@ -106,30 +99,31 @@ let handler = async (m, { conn, command }) => {
 
 handler.before = async (m, { conn }) => {
     const chat = m.chat
-    let s = unoSession[chat]
-    
     let msgText = m.text || ''
+    
+    // Intercettazione corretta dell'ID del bottone
     if (m.message?.interactiveResponseMessage) {
         const response = m.message.interactiveResponseMessage
         if (response.nativeFlowResponseMessage?.paramsJson) {
-            const params = JSON.parse(response.nativeFlowResponseMessage.paramsJson)
-            msgText = params.id
+            msgText = JSON.parse(response.nativeFlowResponseMessage.paramsJson).id
         }
     }
 
-    if (msgText === '.uno' && !s) {
-        return handler(m, { conn, command: 'uno' })
+    // Se premo Rigioca e non c'è sessione, o voglio forzarla
+    if (msgText === '.uno') {
+        return handler(m, { conn, command: 'uno', text: '.uno' })
     }
 
+    let s = unoSession[chat]
     if (!s || s.player !== m.sender) return
     s.lastActivity = Date.now()
 
     let msg = msgText.trim().toLowerCase()
     let name = conn.getName(m.sender)
 
-    if (msg === 'enduno') {
+    if (msg === 'enduno' || msg === 'chiudi') {
         delete unoSession[chat]
-        return m.reply('❌ Partita terminata!')
+        return m.reply('❌ Partita chiusa.')
     }
 
     if (msg === 'pesca') {
@@ -147,7 +141,6 @@ handler.before = async (m, { conn }) => {
                 s.currentColor = cBot.includes('Jolly') ? s.currentColor : cBot.split(' ')[0]
                 reportP += `\n🤖 Bot gioca: ${formattaCarta(cBot)}`
             } else {
-                if (s.mazzo.length === 0) s.mazzo = creaMazzo()
                 s.botHand.push(s.mazzo.shift())
                 reportP += `\n🤖 Bot pesca.`
             }
