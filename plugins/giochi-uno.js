@@ -13,7 +13,6 @@ const coloriHex = {
 async function generaGrafica(s) {
     const canvas = createCanvas(1000, 600)
     const ctx = canvas.getContext('2d')
-
     const gradiente = ctx.createRadialGradient(500, 300, 50, 500, 300, 600)
     gradiente.addColorStop(0, '#1e1e1e')
     gradiente.addColorStop(1, '#000000')
@@ -27,16 +26,11 @@ async function generaGrafica(s) {
         ctx.beginPath()
         ctx.roundRect(x, y, w, h, 8)
         ctx.fill()
-
         if (isHidden) {
             ctx.fillStyle = '#2c2c2e'
             ctx.beginPath()
             ctx.roundRect(x + 4, y + 4, w - 8, h - 8, 5)
             ctx.fill()
-            ctx.fillStyle = '#ffffff'
-            ctx.font = `bold ${30 * scale}px Arial`
-            ctx.textAlign = 'center'
-            ctx.fillText('?', x + (w/2), y + (h/1.6))
         } else {
             ctx.fillStyle = color
             ctx.beginPath()
@@ -45,27 +39,21 @@ async function generaGrafica(s) {
             ctx.fillStyle = '#ffffff'
             ctx.textAlign = 'center'
             ctx.font = `bold ${24 * scale}px Arial`
-            let val = label.split(' ')[1] || 'UNO'
-            ctx.fillText(val, x + w/2, y + h/2 + 10)
+            ctx.fillText(label.split(' ')[1] || 'UNO', x + w/2, y + h/2 + 10)
         }
     }
 
     drawCard(50, 240, 'Mazzo', '#3a3a3c', true, 0.9)
-    let botX = 500 - (Math.min(s.botHand.length, 10) * 15)
-    s.botHand.slice(0, 12).forEach((_, i) => drawCard(botX + (i * 30), 40, '', '', true, 0.7))
-    
+    s.botHand.slice(0, 12).forEach((_, i) => drawCard(400 + (i * 25), 40, '', '', true, 0.7))
     let tColore = coloriHex[s.tableCard.split(' ')[0]] || coloriHex['Jolly']
     drawCard(460, 230, s.tableCard, tColore, false, 1.2)
-
     let startX = 500 - (s.playerHand.length * 45)
     s.playerHand.forEach((c, i) => {
         let col = coloriHex[c.split(' ')[0]] || coloriHex['Jolly']
         drawCard(startX + (i * 90), 420, c, col, false, 1)
         ctx.fillStyle = '#ffffff'
-        ctx.font = 'bold 18px Arial'
         ctx.fillText(i + 1, startX + (i * 90) + 40, 565)
     })
-
     return canvas.toBuffer()
 }
 
@@ -73,7 +61,6 @@ let handler = async (m, { conn }) => {
     try {
         let chat = m.chat
         let name = conn.getName(m.sender)
-
         let mazzo = []
         let cols = ['Rosso', 'Blu', 'Giallo', 'Verde']
         cols.forEach(c => {
@@ -91,18 +78,19 @@ let handler = async (m, { conn }) => {
             tableCard: mazzo.find(c => !c.includes('Jolly')),
         }
         
-        let s = unoSession[chat]
-        let img = await generaGrafica(s)
+        let img = await generaGrafica(unoSession[chat])
 
-        // Costruzione messaggio con bottoni Native Flow
+        // Soluzione alternativa caricando l'immagine tramite sendMessage e poi relaying
+        let q = await conn.sendMessage(chat, { image: img })
+        
         const message = {
             interactiveMessage: {
                 header: {
                     title: `🃏 *UNO MATCH: ${name.toUpperCase()}*`,
                     hasMediaAttachment: true,
-                    imageMessage: (await conn.prepareMessageMedia({ image: img }, { upload: conn.waUploadToServer })).imageMessage
+                    imageMessage: q.message.imageMessage
                 },
-                body: { text: "Tocca un bottone per agire o scrivi il numero della carta!" },
+                body: { text: "Tocca un bottone o invia il numero della carta!" },
                 footer: { text: "Gemini Uno Engine" },
                 nativeFlowMessage: {
                     buttons: [
@@ -120,10 +108,13 @@ let handler = async (m, { conn }) => {
         }
 
         await conn.relayMessage(chat, { viewOnceMessage: { message } }, { quoted: m })
+        
+        // Eliminiamo il messaggio dell'immagine "temporanea" per non sporcare la chat
+        await conn.sendMessage(chat, { delete: q.key })
 
     } catch (e) {
         console.error(e)
-        m.reply('❌ Errore: Assicurati di aver installato canvas e che il bot supporti i relayMessage.')
+        m.reply('❌ Errore critico nel caricamento media.')
     }
 }
 
