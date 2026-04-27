@@ -75,7 +75,7 @@ function pescaCarte(mazzo, mano, quantita) {
 let handler = async (m, { conn, command, text }) => {
     let chat = m.chat
     let name = conn.getName(m.sender)
-    
+
     delete unoSession[chat]
     let mazzo = creaMazzo()
     let playerHand = mazzo.splice(0, 7)
@@ -93,7 +93,7 @@ let handler = async (m, { conn, command, text }) => {
     }
 
     let s = unoSession[chat]
-    
+
     await conn.sendMessage(chat, {
         text: generaStato(s, name),
         interactiveButtons: gameButtons()
@@ -103,7 +103,7 @@ let handler = async (m, { conn, command, text }) => {
 handler.before = async (m, { conn }) => {
     const chat = m.chat
     let msgText = (m.text || m.body || '').trim().toLowerCase()
-    
+
     if (m.message?.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
         try {
             const params = JSON.parse(m.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson)
@@ -129,7 +129,7 @@ handler.before = async (m, { conn }) => {
         let p = s.mazzo.shift()
         s.playerHand.push(p)
         let reportP = `📥 Hai pescato: ${formattaCarta(p)}`
-        
+
         if (!puoGiocare(p, s.tableCard, s.currentColor)) {
             reportP += `\n❌ Non giocabile. Turno al Bot...`
             let bIdx = s.botHand.findIndex(c => puoGiocare(c, s.tableCard, s.currentColor))
@@ -138,7 +138,7 @@ handler.before = async (m, { conn }) => {
                 s.tableCard = cBot
                 s.currentColor = cBot.includes('Jolly') ? s.currentColor : cBot.split(' ')[0]
                 reportP += `\n🤖 Bot gioca: ${formattaCarta(cBot)}`
-                
+
                 // Effetto pesca sul giocatore se il bot gioca speciale
                 if (cBot.includes('+2')) {
                     pescaCarte(s.mazzo, s.playerHand, 2)
@@ -184,7 +184,7 @@ handler.before = async (m, { conn }) => {
         }
 
         let report = `✅ Hai giocato ${formattaCarta(cartaScelta)}.`
-        
+
         // Effetto pesca sul BOT se il giocatore gioca speciale
         if (cartaScelta.includes('+2')) {
             pescaCarte(s.mazzo, s.botHand, 2)
@@ -201,7 +201,7 @@ handler.before = async (m, { conn }) => {
             s.tableCard = cBot
             s.currentColor = cBot.includes('Jolly') ? s.currentColor : cBot.split(' ')[0]
             report += `\n🤖 Bot gioca: ${formattaCarta(cBot)}`
-            
+
             // Effetto pesca sul GIOCATORE se il bot gioca speciale
             if (cBot.includes('+2')) {
                 pescaCarte(s.mazzo, s.playerHand, 2)
