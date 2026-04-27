@@ -38,20 +38,20 @@ function puoGiocare(carta, tavolo, coloreScelto) {
 function generaStato(s, nomeUtente, extraMsg = '') {
     let txt = `━━━━━━━━━━━━━━━━━━━━\n`
     txt += `🃏   *PARTITA DI UNO* 🃏\n`
-    txt += `━━━━━━━━━━━━━━━━━━━━\n\n`
+    txt += `━━━━━━━━━━━━━━━━━━━━\n`
+    txt += `*DESCRIZIONE:* Sfida il bot a UNO! L'obiettivo è restare senza carte. Abbina il colore o il numero della carta sul tavolo. Se non puoi giocare, usa il tasto pesca (passerai il turno).\n\n`
     if (extraMsg) txt += `${extraMsg}\n\n`
     txt += `📍 In Tavola: ${formattaCarta(s.tableCard)}\n`
     txt += `🎨 Colore Attivo: *${s.currentColor} ${colori[s.currentColor] || ''}*\n`
     txt += `🤖 Carte Bot: *${s.botHand.length}*\n`
-    txt += `🎴 Carte rimaste: *${s.mazzo.length}*\n\n`
+    txt += `🎴 Carte nel mazzo: *${s.mazzo.length}*\n\n`
     txt += `👤 *MANO DI ${nomeUtente.toUpperCase()}:*\n`
     s.playerHand.forEach((c, i) => {
         txt += `  *${i + 1}* ⮕ ${formattaCarta(c)}\n`
     })
     txt += `\n*COMANDI:*`
-    txt += `\n⮕ Invia il *numero* per giocare`
-    txt += `\n\n*AZIONI RAPIDE:*`
-    txt += `\n👇 Usa i pulsanti sotto`
+    txt += `\n⮕ Scrivi il *numero* della carta`
+    txt += `\n⮕ Usa il tasto *Pesca* se sei bloccato`
     txt += `\n━━━━━━━━━━━━━━━━━━━━`
     return txt
 }
@@ -81,9 +81,9 @@ let handler = async (m, { conn, command }) => {
         
         await conn.sendMessage(chat, {
             text: generaStato(s, name),
-            footer: 'Uno Game',
+            footer: 'Uno Bot Game',
             buttons: [
-                { buttonId: 'pesca', buttonText: { displayText: '📥 Pesca e Passa' }, type: 1 },
+                { buttonId: 'pesca', buttonText: { displayText: '📥 Pesca' }, type: 1 },
                 { buttonId: 'enduno', buttonText: { displayText: '❌ Chiudi' }, type: 1 }
             ],
             headerType: 1
@@ -109,7 +109,7 @@ handler.before = async function (m, { conn }) {
         let p = s.mazzo.shift()
         s.playerHand.push(p)
         
-        let reportP = `📥 Hai pescato: ${formattaCarta(p)}\n🕒 *Turno passato al Bot...*`
+        let reportP = `📥 Hai pescato: ${formattaCarta(p)}\n🕒 *Turno finito, tocca al Bot...*`
         
         let bIdx = s.botHand.findIndex(c => puoGiocare(c, s.tableCard, s.currentColor))
         if (bIdx !== -1) {
@@ -126,7 +126,7 @@ handler.before = async function (m, { conn }) {
         return conn.sendMessage(m.chat, {
             text: generaStato(s, name, reportP),
             buttons: [
-                { buttonId: 'pesca', buttonText: { displayText: '📥 Pesca e Passa' }, type: 1 },
+                { buttonId: 'pesca', buttonText: { displayText: '📥 Pesca' }, type: 1 },
                 { buttonId: 'enduno', buttonText: { displayText: '❌ Chiudi' }, type: 1 }
             ]
         }, { quoted: m })
@@ -198,7 +198,7 @@ handler.before = async function (m, { conn }) {
         return conn.sendMessage(m.chat, {
             text: generaStato(s, name, report),
             buttons: [
-                { buttonId: 'pesca', buttonText: { displayText: '📥 Pesca e Passa' }, type: 1 },
+                { buttonId: 'pesca', buttonText: { displayText: '📥 Pesca' }, type: 1 },
                 { buttonId: 'enduno', buttonText: { displayText: '❌ Chiudi' }, type: 1 }
             ]
         }, { quoted: m })
