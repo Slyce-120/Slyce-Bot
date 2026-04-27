@@ -44,7 +44,8 @@ async function generaGrafica(s) {
     }
 
     drawCard(50, 240, 'Mazzo', '#3a3a3c', true, 0.9)
-    s.botHand.slice(0, 12).forEach((_, i) => drawCard(400 + (i * 25), 40, '', '', true, 0.7))
+    let botX = 500 - (Math.min(s.botHand.length, 10) * 15)
+    s.botHand.slice(0, 12).forEach((_, i) => drawCard(botX + (i * 30), 40, '', '', true, 0.7))
     let tColore = coloriHex[s.tableCard.split(' ')[0]] || coloriHex['Jolly']
     drawCard(460, 230, s.tableCard, tColore, false, 1.2)
     let startX = 500 - (s.playerHand.length * 45)
@@ -52,6 +53,7 @@ async function generaGrafica(s) {
         let col = coloriHex[c.split(' ')[0]] || coloriHex['Jolly']
         drawCard(startX + (i * 90), 420, c, col, false, 1)
         ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 18px Arial'
         ctx.fillText(i + 1, startX + (i * 90) + 40, 565)
     })
     return canvas.toBuffer()
@@ -61,6 +63,7 @@ let handler = async (m, { conn }) => {
     try {
         let chat = m.chat
         let name = conn.getName(m.sender)
+        
         let mazzo = []
         let cols = ['Rosso', 'Blu', 'Giallo', 'Verde']
         cols.forEach(c => {
@@ -78,17 +81,15 @@ let handler = async (m, { conn }) => {
             tableCard: mazzo.find(c => !c.includes('Jolly')),
         }
         
-        let img = await generaGrafica(unoSession[chat])
+        let imgBuffer = await generaGrafica(unoSession[chat])
 
-        // Soluzione alternativa caricando l'immagine tramite sendMessage e poi relaying
-        let q = await conn.sendMessage(chat, { image: img })
-        
-        const message = {
+        // Usiamo sendMessage con la nuova struttura "viewOnce" per unire immagine e bottoni
+        await conn.sendMessage(chat, {
             interactiveMessage: {
                 header: {
                     title: `🃏 *UNO MATCH: ${name.toUpperCase()}*`,
                     hasMediaAttachment: true,
-                    imageMessage: q.message.imageMessage
+                    imageMessage: (await conn.prepareMessageMedia({ image: imgBuffer }, { upload: conn.waUploadToServer })).imageMessage
                 },
                 body: { text: "Tocca un bottone o invia il numero della carta!" },
                 footer: { text: "Gemini Uno Engine" },
@@ -105,16 +106,13 @@ let handler = async (m, { conn }) => {
                     ]
                 }
             }
-        }
-
-        await conn.relayMessage(chat, { viewOnceMessage: { message } }, { quoted: m })
-        
-        // Eliminiamo il messaggio dell'immagine "temporanea" per non sporcare la chat
-        await conn.sendMessage(chat, { delete: q.key })
+        }, { quoted: m })
 
     } catch (e) {
+        // Se prepareMessageMedia fallisce di nuovo, usiamo il metodo ignorante
         console.error(e)
-        m.reply('❌ Errore critico nel caricamento media.')
+        let imgBuffer = await generaGrafica(unoSession[chat])
+        await conn.sendMessage(chat, { image: imgBuffer, caption: "🃏 *UNO MATCH*\n\nScrivi *pesca* o il *numero* della carta!" }, { quoted: m })
     }
 }
 
