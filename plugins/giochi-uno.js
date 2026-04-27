@@ -48,36 +48,28 @@ ${extraMsg ? extraMsg + '\n' : ''}
 👤 *MANO DI ${nomeUtente.toUpperCase()}:*
 ${s.playerHand.map((c, i) => `  *${i + 1}* ⮕ ${formattaCarta(c)}`).join('\n')}
 
-*COMANDI:*
-⮕ Invia il *numero* per giocare
-⮕ Scrivi *pesca* per nuove carte
-⮕ Scrivi *enduno* per chiudere
+*COMANDI:* Numero | *pesca* | *enduno*
 ━━━━━━━━━━━━━━━━━━━━`
 }
 
 let handler = async (m, { conn, command }) => {
     let chat = m.chat
     if (command === 'uno') {
-        if (unoSession[chat]) return m.reply('⚠️ Una partita è già in corso!')
-        
+        if (unoSession[chat]) return m.reply('⚠️ Partita in corso!')
         let mazzo = creaMazzo()
         let playerHand = mazzo.splice(0, 7)
         let botHand = mazzo.splice(0, 7)
         let tableIdx = mazzo.findIndex(c => !['Jolly', 'Jolly +4', '+2'].includes(c))
         let tableCard = mazzo.splice(tableIdx, 1)[0]
-
         unoSession[chat] = {
             player: m.sender,
-            mazzo: mazzo,
-            playerHand: playerHand,
-            botHand: botHand,
-            tableCard: tableCard,
+            mazzo,
+            playerHand,
+            botHand,
+            tableCard,
             currentColor: tableCard.split(' ')[0]
         }
-
-        let s = unoSession[chat]
-        let name = conn.getName(m.sender)
-        await conn.sendMessage(chat, { text: generaStato(s, name) }, { quoted: m })
+        await conn.sendMessage(chat, { text: generaStato(unoSession[chat], conn.getName(m.sender)) }, { quoted: m })
     }
 }
 
@@ -89,34 +81,31 @@ handler.before = async function (m, { conn }) {
 
     if (msg === 'enduno') {
         delete unoSession[m.chat]
-        return m.reply('❌ Partita terminata!')
+        return m.reply('❌ Finita!')
     }
 
     if (msg === 'pesca') {
         if (!s.mazzo.length) s.mazzo = creaMazzo()
         let p = s.mazzo.shift()
         s.playerHand.push(p)
-        let reportP = `📥 Hai pescato: ${formattaCarta(p)}`
-        
+        let report = `📥 Hai pescato: ${formattaCarta(p)}`
         let bIdx = s.botHand.findIndex(c => puoGiocare(c, s.tableCard, s.currentColor))
         if (bIdx !== -1) {
             let cB = s.botHand.splice(bIdx, 1)[0]
             s.tableCard = cB
             if (!['Jolly', 'Jolly +4', '+2'].includes(cB)) s.currentColor = cB.split(' ')[0]
-            reportP += `\n🤖 Il bot risponde con: ${formattaCarta(cB)}`
+            report += `\n🤖 Bot gioca: ${formattaCarta(cB)}`
         } else {
             if (!s.mazzo.length) s.mazzo = creaMazzo()
-            s.botHand.push(s.mazzo.shift())
-            reportP += `\n🤖 Il bot non ha mosse e pesca.`
+            s.botHand.push(s.mazzo.shift()); report += `\n🤖 Bot pesca.`
         }
-        return m.reply(generaStato(s, name, reportP))
+        return m.reply(generaStato(s, name, report))
     }
 
     let index = parseInt(msg) - 1
     if (!isNaN(index) && index >= 0 && index < s.playerHand.length) {
         let carta = s.playerHand[index]
-        if (!puoGiocare(carta, s.tableCard, s.currentColor)) return m.reply(`🚫 Mossa non valida!`)
-
+        if (!puoGiocare(carta, s.tableCard, s.currentColor)) return m.reply(`🚫 No!`)
         s.playerHand.splice(index, 1)
         s.tableCard = carta
         
@@ -130,19 +119,14 @@ handler.before = async function (m, { conn }) {
 
         if (s.playerHand.length === 0) {
             delete unoSession[m.chat]
-            return m.reply(`🏆 *HAI VINTO!*`)
+            return m.reply(`🏆 VINTO!`)
         }
 
-        let report = `✅ Hai giocato ${formattaCarta(carta)}.`
-        
+        let report = `✅ Giocata: ${formattaCarta(carta)}`
         if (carta.includes('+2') || carta.includes('+4')) {
             let n = carta.includes('+4') ? 4 : 2
-            for(let i=0; i<n; i++) { 
-                if(!s.mazzo.length) s.mazzo = creaMazzo()
-                s.botHand.push(s.mazzo.shift()) 
-            }
-            report += `\n🤖 Il bot pesca ${n} e salta il turno!\n👉 Tocca a te!`
-            return m.reply(generaStato(s, name, report))
+            for(let i=0; i<n; i++) { if(!s.mazzo.length) s.mazzo = creaMazzo(); s.botHand.push(s.mazzo.shift()) }
+            return m.reply(generaStato(s, name, report + `\n🤖 Bot +${n} e salta!`))
         }
 
         let bIdx = s.botHand.findIndex(c => puoGiocare(c, s.tableCard, s.currentColor))
@@ -156,32 +140,18 @@ handler.before = async function (m, { conn }) {
             } else if (cB !== '+2') {
                 s.currentColor = cB.split(' ')[0]
             }
-            report += `\n🤖 Il bot risponde con: ${formattaCarta(cB)}`
+            report += `\n🤖 Bot gioca: ${formattaCarta(cB)}`
             if (cB.includes('+2') || cB.includes('+4')) {
                 let n = cB.includes('+4') ? 4 : 2
-                for(let i=0; i<n; i++) { 
-                    if(!s.mazzo.length) s.mazzo = creaMazzo()
-                    s.playerHand.push(s.mazzo.shift()) 
-                }
-                report += `\n⚠️ Peschi ${n} e salti il turno!`
+                for(let i=0; i<n; i++) { if(!s.mazzo.length) s.mazzo = creaMazzo(); s.playerHand.push(s.mazzo.shift()) }
+                report += `\n⚠️ Prendi +${n} e salti!`
             }
-        } else { 
-            if(!s.mazzo.length) s.mazzo = creaMazzo()
-            s.botHand.push(s.mazzo.shift())
-            report += `\n🤖 Il bot non ha mosse e pesca.` 
-        }
+        } else { if(!s.mazzo.length) s.mazzo = creaMazzo(); s.botHand.push(s.mazzo.shift()); report += `\n🤖 Bot pesca.` }
 
-        if (s.botHand.length === 0) { 
-            delete unoSession[m.chat]
-            return m.reply(`${report}\n\n🤡 *SCONFITTA!*`) 
-        }
+        if (s.botHand.length === 0) { delete unoSession[m.chat]; return m.reply(report + `\n\n🤡 PERSO!`) }
         return m.reply(generaStato(s, name, report))
     }
 }
 
-handler.help = ['uno']
-handler.tags = ['giochi']
 handler.command = /^(uno)$/i
-handler.group = true
-
 export default handler
