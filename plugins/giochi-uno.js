@@ -67,6 +67,7 @@ function generaStato(s, nomeUtente, extraMsg = '') {
 let handler = async (m, { conn, command, text }) => {
     let chat = m.chat
     
+    // Avvio o Riavvio partita
     if (command === 'uno' || text === '.uno') {
         delete unoSession[chat]
         
@@ -100,15 +101,17 @@ handler.before = async (m, { conn }) => {
     const chat = m.chat
     let msgText = m.text || ''
     
+    // GESTIONE BOTTONI (Logica avanzata)
     if (m.message?.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
         try {
             const params = JSON.parse(m.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson)
-            msgText = params.id
+            msgText = params.id // Prende 'pesca', 'enduno' o '.uno'
         } catch (e) {
-            console.error(e)
+            console.error('Errore parsing bottoni:', e)
         }
     }
 
+    // Se l'ID è .uno, resetta e avvia
     if (msgText === '.uno') {
         return handler(m, { conn, command: 'uno', text: '.uno' })
     }
@@ -119,11 +122,13 @@ handler.before = async (m, { conn }) => {
     let msg = msgText.trim().toLowerCase()
     let name = conn.getName(m.sender)
 
-    if (msg === 'enduno') {
+    // COMANDO CHIUDI
+    if (msg === 'enduno' || msg === 'chiudi') {
         delete unoSession[chat]
-        return m.reply('❌ Partita chiusa.')
+        return m.reply('❌ Partita terminata.')
     }
 
+    // COMANDO PESCA
     if (msg === 'pesca') {
         if (s.mazzo.length === 0) s.mazzo = creaMazzo()
         let p = s.mazzo.shift()
@@ -152,6 +157,7 @@ handler.before = async (m, { conn }) => {
         }, { quoted: m })
     }
 
+    // GESTIONE NUMERI (Giocata carta)
     let index = parseInt(msg) - 1
     if (!isNaN(index) && index >= 0 && index < s.playerHand.length) {
         let cartaScelta = s.playerHand[index]
