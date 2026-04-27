@@ -67,7 +67,6 @@ function generaStato(s, nomeUtente, extraMsg = '') {
 let handler = async (m, { conn, command, text }) => {
     let chat = m.chat
     
-    // Reset forzato se si avvia una nuova partita
     if (command === 'uno' || text === '.uno') {
         delete unoSession[chat]
         
@@ -101,27 +100,26 @@ handler.before = async (m, { conn }) => {
     const chat = m.chat
     let msgText = m.text || ''
     
-    // Intercettazione corretta dell'ID del bottone
-    if (m.message?.interactiveResponseMessage) {
-        const response = m.message.interactiveResponseMessage
-        if (response.nativeFlowResponseMessage?.paramsJson) {
-            msgText = JSON.parse(response.nativeFlowResponseMessage.paramsJson).id
+    if (m.message?.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
+        try {
+            const params = JSON.parse(m.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson)
+            msgText = params.id
+        } catch (e) {
+            console.error(e)
         }
     }
 
-    // Se premo Rigioca e non c'è sessione, o voglio forzarla
     if (msgText === '.uno') {
         return handler(m, { conn, command: 'uno', text: '.uno' })
     }
 
     let s = unoSession[chat]
     if (!s || s.player !== m.sender) return
-    s.lastActivity = Date.now()
 
     let msg = msgText.trim().toLowerCase()
     let name = conn.getName(m.sender)
 
-    if (msg === 'enduno' || msg === 'chiudi') {
+    if (msg === 'enduno') {
         delete unoSession[chat]
         return m.reply('❌ Partita chiusa.')
     }
@@ -141,7 +139,7 @@ handler.before = async (m, { conn }) => {
                 s.currentColor = cBot.includes('Jolly') ? s.currentColor : cBot.split(' ')[0]
                 reportP += `\n🤖 Bot gioca: ${formattaCarta(cBot)}`
             } else {
-                s.botHand.push(s.mazzo.shift())
+                if (s.mazzo.length > 0) s.botHand.push(s.mazzo.shift())
                 reportP += `\n🤖 Bot pesca.`
             }
         } else {
