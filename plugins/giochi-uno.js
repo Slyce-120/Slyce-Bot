@@ -33,6 +33,10 @@ async function generaGrafica(s) {
             ctx.beginPath()
             ctx.roundRect(x + 4, y + 4, w - 8, h - 8, 5)
             ctx.fill()
+            ctx.fillStyle = '#ffffff'
+            ctx.font = `bold ${30 * scale}px Arial`
+            ctx.textAlign = 'center'
+            ctx.fillText('?', x + (w/2), y + (h/1.6))
         } else {
             ctx.fillStyle = color
             ctx.beginPath()
@@ -47,7 +51,8 @@ async function generaGrafica(s) {
     }
 
     drawCard(50, 240, 'Mazzo', '#3a3a3c', true, 0.9)
-    s.botHand.slice(0, 12).forEach((_, i) => drawCard(400 + (i * 25), 40, '', '', true, 0.7))
+    let botX = 500 - (Math.min(s.botHand.length, 10) * 15)
+    s.botHand.slice(0, 12).forEach((_, i) => drawCard(botX + (i * 30), 40, '', '', true, 0.7))
     
     let tColore = coloriHex[s.tableCard.split(' ')[0]] || coloriHex['Jolly']
     drawCard(460, 230, s.tableCard, tColore, false, 1.2)
@@ -57,6 +62,7 @@ async function generaGrafica(s) {
         let col = coloriHex[c.split(' ')[0]] || coloriHex['Jolly']
         drawCard(startX + (i * 90), 420, c, col, false, 1)
         ctx.fillStyle = '#ffffff'
+        ctx.font = 'bold 18px Arial'
         ctx.fillText(i + 1, startX + (i * 90) + 40, 565)
     })
 
@@ -88,15 +94,36 @@ let handler = async (m, { conn }) => {
         let s = unoSession[chat]
         let img = await generaGrafica(s)
 
-        // Invio standard (più sicuro se i bottoni falliscono)
-        await conn.sendMessage(chat, {
-            image: img,
-            caption: `🃏 *UNO MATCH: ${name.toUpperCase()}*\n\n📥 Scrivi *pesca* per pescare\n🛑 Scrivi *enduno* per uscire\n\n🔢 Invia il *numero* della carta per giocare!`
-        }, { quoted: m })
+        // Costruzione messaggio con bottoni Native Flow
+        const message = {
+            interactiveMessage: {
+                header: {
+                    title: `🃏 *UNO MATCH: ${name.toUpperCase()}*`,
+                    hasMediaAttachment: true,
+                    imageMessage: (await conn.prepareMessageMedia({ image: img }, { upload: conn.waUploadToServer })).imageMessage
+                },
+                body: { text: "Tocca un bottone per agire o scrivi il numero della carta!" },
+                footer: { text: "Gemini Uno Engine" },
+                nativeFlowMessage: {
+                    buttons: [
+                        {
+                            name: "quick_reply",
+                            buttonParamsJson: JSON.stringify({ display_text: "📥 PESCA", id: "pesca" })
+                        },
+                        {
+                            name: "quick_reply",
+                            buttonParamsJson: JSON.stringify({ display_text: "🛑 ABBANDONA", id: "enduno" })
+                        }
+                    ]
+                }
+            }
+        }
+
+        await conn.relayMessage(chat, { viewOnceMessage: { message } }, { quoted: m })
 
     } catch (e) {
         console.error(e)
-        m.reply('❌ Errore durante la generazione del gioco. Verifica i log.')
+        m.reply('❌ Errore: Assicurati di aver installato canvas e che il bot supporti i relayMessage.')
     }
 }
 
