@@ -51,7 +51,7 @@ function generaStato(s, nomeUtente, extraMsg = '') {
     let txt = `━━━━━━━━━━━━━━━━━━━━\n`
     txt += `🃏   *PARTITA DI UNO* 🃏\n`
     txt += `━━━━━━━━━━━━━━━━━━━━\n`
-    txt += `*DESCRIZIONE:* Sfida il bot! Abbina colore o numero. Se peschi e non puoi giocare, il turno passa al bot.\n\n`
+    txt += `*DESCRIZIONE:* Abbina colore o numero. Se peschi e non puoi giocare, il turno passa al bot.\n\n`
     if (extraMsg) txt += `${extraMsg}\n\n`
     txt += `📍 In Tavola: ${formattaCarta(s.tableCard)}\n`
     txt += `🎨 Colore Attivo: *${s.currentColor} ${colori[s.currentColor] || ''}*\n`
@@ -67,8 +67,11 @@ function generaStato(s, nomeUtente, extraMsg = '') {
 
 let handler = async (m, { conn, command }) => {
     let chat = m.chat
+    
     if (command === 'uno') {
-        if (unoSession[chat]) return m.reply('⚠️ Una partita è già in corso!')
+        if (unoSession[chat]) {
+            return conn.reply(chat, '⚠️ Una partita è già in corso! Scrivi *enduno* per terminarla.', m)
+        }
         
         let mazzo = creaMazzo()
         let playerHand = mazzo.splice(0, 7)
@@ -90,7 +93,6 @@ let handler = async (m, { conn, command }) => {
         
         await conn.sendMessage(chat, {
             text: generaStato(s, name),
-            footer: '𝖇𝖑𝖔𝖔𝖉𝖇𝖔𝖙',
             interactiveButtons: gameButtons()
         }, { quoted: m })
     }
@@ -99,8 +101,7 @@ let handler = async (m, { conn, command }) => {
 handler.before = async (m, { conn }) => {
     const chat = m.chat
     let s = unoSession[chat]
-    let name = conn.getName(m.sender)
-
+    
     let msgText = m.text || ''
     if (m.message?.interactiveResponseMessage) {
         const response = m.message.interactiveResponseMessage
@@ -111,13 +112,13 @@ handler.before = async (m, { conn }) => {
     }
 
     if (msgText === '.uno' && !s) {
-        const fakeMessage = { ...m, text: '.uno', body: '.uno' }
-        return handler(fakeMessage, { conn, command: 'uno' })
+        return handler(m, { conn, command: 'uno' })
     }
 
     if (!s || s.player !== m.sender) return
 
     let msg = msgText.trim().toLowerCase()
+    let name = conn.getName(m.sender)
 
     if (msg === 'enduno') {
         delete unoSession[chat]
@@ -149,7 +150,6 @@ handler.before = async (m, { conn }) => {
 
         return conn.sendMessage(chat, {
             text: generaStato(s, name, reportP),
-            footer: '𝖇𝖑𝖔𝖔𝖉𝖇𝖔𝖙',
             interactiveButtons: gameButtons()
         }, { quoted: m })
     }
@@ -167,7 +167,6 @@ handler.before = async (m, { conn }) => {
             delete unoSession[chat]
             return conn.sendMessage(chat, {
                 text: `🏆 *HAI VINTO!*`,
-                footer: '𝖇𝖑𝖔𝖔𝖉𝖇𝖔𝖙',
                 interactiveButtons: playAgainButtons()
             }, { quoted: m })
         }
@@ -190,14 +189,12 @@ handler.before = async (m, { conn }) => {
             delete unoSession[chat]
             return conn.sendMessage(chat, {
                 text: `${report}\n\n🤡 *SCONFITTA!*`,
-                footer: '𝖇𝖑𝖔𝖔𝖉𝖇𝖔𝖙',
                 interactiveButtons: playAgainButtons()
             }, { quoted: m })
         }
 
         return conn.sendMessage(chat, {
             text: generaStato(s, name, report),
-            footer: '𝖇𝖑𝖔𝖔𝖉𝖇𝖔𝖙',
             interactiveButtons: gameButtons()
         }, { quoted: m })
     }
