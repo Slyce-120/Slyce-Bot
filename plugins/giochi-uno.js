@@ -61,28 +61,6 @@ function puoGiocare(carta, tavolo, coloreScelto) {
     return c_c === coloreScelto || v_c === v_t
 }
 
-async function inviaMessaggio(conn, chat, img, caption, m) {
-    const buttons = [
-        { name: "quick_reply", buttonParamsJson: JSON.stringify({ display_text: "📥 PESCA", id: "pesca" }) },
-        { name: "quick_reply", buttonParamsJson: JSON.stringify({ display_text: "🛑 ABBANDONA", id: "enduno" }) }
-    ]
-
-    const message = {
-        interactiveMessage: {
-            header: {
-                title: "🃏 UNO MATCH",
-                hasMediaAttachment: true,
-                imageMessage: (await conn.prepareMessageMedia({ image: img }, { upload: conn.waUploadToServer })).imageMessage
-            },
-            body: { text: caption },
-            footer: { text: "Tocca un bottone o scrivi il numero" },
-            nativeFlowMessage: { buttons }
-        }
-    }
-
-    return conn.relayMessage(chat, { viewOnceMessage: { message } }, { quoted: m })
-}
-
 let handler = async (m, { conn }) => {
     let chat = m.chat
     let mazzo = creaMazzo()
@@ -95,16 +73,27 @@ let handler = async (m, { conn }) => {
     }
     unoSession[chat].currentColor = unoSession[chat].tableCard.split(' ')[0]
     let img = await generaGrafica(unoSession[chat])
-    await inviaMessaggio(conn, chat, img, `🎨 Colore attuale: *${unoSession[chat].currentColor}*`, m)
+    
+    // Metodo di invio ultra-compatibile per BLD-BLOOD-BOT
+    await conn.sendMessage(chat, { 
+        image: img, 
+        caption: `🎨 Colore attuale: *${unoSession[chat].currentColor}*`,
+        interactiveButtons: [
+            { name: "quick_reply", buttonParamsJson: JSON.stringify({ display_text: "📥 PESCA", id: "pesca" }) },
+            { name: "quick_reply", buttonParamsJson: JSON.stringify({ display_text: "🛑 ABBANDONA", id: "enduno" }) }
+        ]
+    }, { quoted: m })
 }
 
 handler.before = async (m, { conn }) => {
     let chat = m.chat, s = unoSession[chat]
     if (!s || s.player !== m.sender) return
     let msgText = (m.text || m.body || '').trim().toLowerCase()
+    
     if (m.message?.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
         msgText = JSON.parse(m.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson).id.toLowerCase()
     }
+    
     if (msgText === '.uno' || msgText === 'uno') return
     if (msgText === 'enduno') { delete unoSession[chat]; return m.reply('🛑 Partita terminata.') }
 
@@ -125,6 +114,7 @@ handler.before = async (m, { conn }) => {
         s.playerHand.splice(idx, 1); s.tableCard = carta
         s.currentColor = carta.includes('Jolly') ? s.currentColor : carta.split(' ')[0]
         report = `✅ Hai giocato ${carta}`
+        
         if (carta.includes('+2')) { 
             for(let i=0; i<2; i++) s.botHand.push(s.mazzo.shift())
             report += `\n⚠️ Bot subisce +2! Salta il turno.`
@@ -140,7 +130,14 @@ handler.before = async (m, { conn }) => {
     if (s.botHand.length === 0) { delete unoSession[chat]; return m.reply('💀 IL BOT HA VINTO!') }
 
     let img = await generaGrafica(s)
-    await inviaMessaggio(conn, chat, img, report, m)
+    await conn.sendMessage(chat, { 
+        image: img, 
+        caption: report, 
+        interactiveButtons: [
+            { name: "quick_reply", buttonParamsJson: JSON.stringify({ display_text: "📥 PESCA", id: "pesca" }) },
+            { name: "quick_reply", buttonParamsJson: JSON.stringify({ display_text: "🛑 ABBANDONA", id: "enduno" }) }
+        ]
+    }, { quoted: m })
 }
 
 function botTurno(s) {
