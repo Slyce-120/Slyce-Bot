@@ -1,6 +1,6 @@
 import { createCanvas } from 'canvas'
 
-if (!global.unoSession) global.unoSession = {}
+let unoSession = {}
 
 const coloriHex = { 
     'Rosso': '#FF3B30', 
@@ -10,20 +10,33 @@ const coloriHex = {
     'Jolly': '#1C1C1E' 
 }
 
+// Funzione Bottoni ottimizzata per massima compatibilità
+const gameButtons = () => {
+    return [
+        { buttonId: 'pesca', buttonText: { displayText: '📥 PESCA' }, type: 1 },
+        { buttonId: 'enduno', buttonText: { displayText: '🛑 ABBANDONA' }, type: 1 }
+    ]
+}
+
 async function generaGrafica(s) {
     const canvas = createCanvas(1000, 600)
     const ctx = canvas.getContext('2d')
+    
+    // Background con gradiente
     const gradiente = ctx.createRadialGradient(500, 300, 50, 500, 300, 600)
-    gradiente.addColorStop(0, '#1a1a1d')
-    gradiente.addColorStop(1, '#000000')
-    ctx.fillStyle = gradiente
-    ctx.fillRect(0, 0, 1000, 600)
+    gradiente.addColorStop(0, '#1a1a1d'); gradiente.addColorStop(1, '#000000')
+    ctx.fillStyle = gradiente; ctx.fillRect(0, 0, 1000, 600)
 
     const drawCard = (x, y, label, color, isHidden = false, scale = 1) => {
         const w = 80 * scale, h = 120 * scale
+        ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
         ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 8); ctx.fill()
+        ctx.shadowBlur = 0;
+        
         if (isHidden) {
             ctx.fillStyle = '#2c2c2e'; ctx.beginPath(); ctx.roundRect(x + 4, y + 4, w - 8, h - 8, 5); ctx.fill()
+            ctx.fillStyle = '#444'; ctx.textAlign = 'center'; ctx.font = `bold ${20 * scale}px Arial`
+            ctx.fillText('UNO', x + (w/2), y + (h/2) + 5)
         } else {
             ctx.fillStyle = color; ctx.beginPath(); ctx.roundRect(x + 4, y + 4, w - 8, h - 8, 5); ctx.fill()
             ctx.fillStyle = '#ffffff'; ctx.textAlign = 'center'; ctx.font = `bold ${22 * scale}px Arial`
@@ -31,11 +44,18 @@ async function generaGrafica(s) {
         }
     }
 
+    // Mazzo coperto
     drawCard(50, 240, 'Mazzo', '#3a3a3c', true, 0.9)
+    
+    // Carte Bot
     let botX = 500 - (Math.min(s.botHand.length, 10) * 15)
     s.botHand.slice(0, 12).forEach((_, i) => drawCard(botX + (i * 30), 40, '', '', true, 0.7))
+
+    // Carta a terra
     let tColore = coloriHex[s.currentColor] || coloriHex['Jolly']
     drawCard(460, 230, s.tableCard, tColore, false, 1.2)
+
+    // Carte Giocatore
     let startX = 500 - (s.playerHand.length * 45)
     s.playerHand.forEach((c, i) => {
         let col = coloriHex[c.split(' ')[0]] || coloriHex['Jolly']
@@ -43,9 +63,11 @@ async function generaGrafica(s) {
         ctx.fillStyle = '#ffffff'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'center'
         ctx.fillText(i + 1, startX + (i * 90) + 40, 565)
     })
+    
     return canvas.toBuffer()
 }
 
+// ... (creaMazzo e puoGiocare restano invariati) ...
 function creaMazzo() {
     let colori = ['Rosso', 'Blu', 'Giallo', 'Verde'], mazzo = []
     colori.forEach(c => {
@@ -63,111 +85,104 @@ function puoGiocare(carta, tavolo, coloreScelto) {
     return c_c === coloreScelto || v_c === v_t
 }
 
-function botTurno(s) {
-    let mosse = s.botHand.filter(c => puoGiocare(c, s.tableCard, s.currentColor))
-    if (mosse.length > 0) {
-        let scelta = mosse.find(c => !c.includes('Jolly')) || mosse[0]
-        s.botHand.splice(s.botHand.indexOf(scelta), 1)
-        s.tableCard = scelta
-        s.currentColor = scelta.includes('Jolly') ? ['Rosso','Blu','Verde','Giallo'][Math.floor(Math.random()*4)] : scelta.split(' ')[0]
-        let res = `\n🤖 Bot gioca: *${scelta}*`
-        if (scelta.includes('+2')) { 
-            for(let i=0; i<2; i++) s.playerHand.push(s.mazzo.shift()); res += `\n⚠️ +2 per te!`; res += botTurno(s) 
-        } else if (scelta.includes('+4')) { 
-            for(let i=0; i<4; i++) s.playerHand.push(s.mazzo.shift()); res += `\n🔥 +4 per te!`; res += botTurno(s) 
-        }
-        return res
-    } else {
-        if (s.mazzo.length === 0) s.mazzo = creaMazzo()
-        s.botHand.push(s.mazzo.shift())
-        return `\n🤖 Bot pesca.`
-    }
-}
-
 let handler = async (m, { conn }) => {
     let chat = m.chat
     let mazzo = creaMazzo()
-    global.unoSession[chat] = {
-        player: m.sender,
-        mazzo: mazzo,
+    unoSession[chat] = {
+        player: m.sender, mazzo,
         playerHand: mazzo.splice(0, 7),
         botHand: mazzo.splice(0, 7),
         tableCard: mazzo.find(c => !c.includes('Jolly') && !c.includes('+')),
         currentColor: ''
     }
-    global.unoSession[chat].currentColor = global.unoSession[chat].tableCard.split(' ')[0]
-    let img = await generaGrafica(global.unoSession[chat])
+    unoSession[chat].currentColor = unoSession[chat].tableCard.split(' ')[0]
+
+    let img = await generaGrafica(unoSession[chat])
     
-    await conn.sendMessage(chat, {
-        image: img,
-        caption: `🃏 *UNO MATCH*\n🎨 Colore attuale: *${global.unoSession[chat].currentColor}*`,
-        footer: '𝖇𝖑𝖔𝖔𝖉𝖇𝖔𝖙',
-        buttons: [
-            { buttonId: 'pesca', buttonText: { displayText: '📥 PESCA' }, type: 1 },
-            { buttonId: 'enduno', buttonText: { displayText: '🛑 FINE' }, type: 1 }
-        ],
+    // Invio con pulsanti legacy più stabili
+    await conn.sendMessage(chat, { 
+        image: img, 
+        caption: `🃏 *UNO MATCH*\n🎨 Colore attuale: *${unoSession[chat].currentColor}*\n\nScrivi il *numero* della carta per giocare!`,
+        buttons: gameButtons(),
         headerType: 4
     }, { quoted: m })
 }
 
 handler.before = async (m, { conn }) => {
-    let chat = m.chat
-    if (!global.unoSession || !global.unoSession[chat]) return
-    let s = global.unoSession[chat]
-    if (s.player !== m.sender) return
+    let chat = m.chat, s = unoSession[chat]
+    if (!s || s.player !== m.sender) return
 
-    let msgText = (m.msg?.selectedButtonId || m.text || '').trim().toLowerCase()
+    // Rilevamento input (Testo, Button ID o SelectedId)
+    let msgText = (m.text || m.body || m.selectedButtonId || m.selectedId || '').trim().toLowerCase()
 
     if (msgText === '.uno' || msgText === 'uno') return
-    if (msgText === 'enduno') {
-        delete global.unoSession[chat]
-        return m.reply('🛑 Partita terminata.')
+    if (msgText === 'enduno' || msgText === '🛑 abbandona') { 
+        delete unoSession[chat]; return m.reply('🛑 Partita terminata.') 
     }
 
     let report = ""
-    if (msgText === 'pesca') {
+    if (msgText === 'pesca' || msgText === '📥 pesca') {
         if (s.mazzo.length === 0) s.mazzo = creaMazzo()
-        let p = s.mazzo.shift()
-        s.playerHand.push(p)
+        let p = s.mazzo.shift(); s.playerHand.push(p)
         report = `📥 Hai pescato: *${p}*`
         if (!puoGiocare(p, s.tableCard, s.currentColor)) {
-            report += `\n❌ Non giocabile. Passi.`
+            report += `\n❌ Non puoi usarla. Passi il turno.`
             report += botTurno(s)
         }
     } else {
         let idx = parseInt(msgText) - 1
         if (isNaN(idx) || idx < 0 || idx >= s.playerHand.length) return
         let carta = s.playerHand[idx]
-        if (!puoGiocare(carta, s.tableCard, s.currentColor)) return m.reply('❌ Mossa non valida!')
-        
-        s.playerHand.splice(idx, 1)
-        s.tableCard = carta
+        if (!puoGiocare(carta, s.tableCard, s.currentColor)) return m.reply('❌ Mossa non valida! La carta non corrisponde per colore o numero.')
+
+        s.playerHand.splice(idx, 1); s.tableCard = carta
         s.currentColor = carta.includes('Jolly') ? s.currentColor : carta.split(' ')[0]
         report = `✅ Hai giocato: *${carta}*`
-        
+
         if (carta.includes('+2')) { 
-            for(let i=0; i<2; i++) s.botHand.push(s.mazzo.shift()); report += `\n⚠️ Bot subisce +2!`
+            for(let i=0; i<2; i++) s.botHand.push(s.mazzo.shift())
+            report += `\n⚠️ Bot subisce +2! Salta il turno.`
         } else if (carta.includes('+4')) { 
-            for(let i=0; i<4; i++) s.botHand.push(s.mazzo.shift()); report += `\n🔥 Bot subisce +4!`
+            for(let i=0; i<4; i++) s.botHand.push(s.mazzo.shift())
+            report += `\n🔥 Bot subisce +4! Salta il turno.`
         } else {
             report += botTurno(s)
         }
     }
 
-    if (s.playerHand.length === 0) { delete global.unoSession[chat]; return m.reply('🏆 HAI VINTO!') }
-    if (s.botHand.length === 0) { delete global.unoSession[chat]; return m.reply('💀 HAI PERSO!') }
+    if (s.playerHand.length === 0) { delete unoSession[chat]; return m.reply('🏆 COMPLIMENTI! HAI VINTO!') }
+    if (s.botHand.length === 0) { delete unoSession[chat]; return m.reply('💀 IL BOT HA VINTO! Ritenta...') }
 
     let img = await generaGrafica(s)
-    await conn.sendMessage(chat, {
-        image: img,
-        caption: report,
-        footer: '𝖇𝖑𝖔𝖔𝖉𝖇𝖔𝖙',
-        buttons: [
-            { buttonId: 'pesca', buttonText: { displayText: '📥 PESCA' }, type: 1 },
-            { buttonId: 'enduno', buttonText: { displayText: '🛑 FINE' }, type: 1 }
-        ],
+    await conn.sendMessage(chat, { 
+        image: img, 
+        caption: `${report}\n\n🎨 Colore attuale: *${s.currentColor}*`, 
+        buttons: gameButtons(),
         headerType: 4
     }, { quoted: m })
+}
+
+// ... (botTurno invariata) ...
+function botTurno(s) {
+    let mosse = s.botHand.filter(c => puoGiocare(c, s.tableCard, s.currentColor))
+    if (mosse.length > 0) {
+        let scelta = mosse.find(c => !c.includes('Jolly')) || mosse[0]
+        s.botHand.splice(s.botHand.indexOf(scelta), 1); s.tableCard = scelta
+        s.currentColor = scelta.includes('Jolly') ? ['Rosso','Blu','Verde','Giallo'][Math.floor(Math.random()*4)] : scelta.split(' ')[0]
+        let res = `\n🤖 Bot gioca: *${scelta}*`
+
+        if (scelta.includes('+2')) { 
+            for(let i=0; i<2; i++) s.playerHand.push(s.mazzo.shift())
+            res += `\n⚠️ Ti becchi +2! Salti il turno.`; res += botTurno(s) 
+        } else if (scelta.includes('+4')) { 
+            for(let i=0; i<4; i++) s.playerHand.push(s.mazzo.shift())
+            res += `\n🔥 Ti becchi +4! Salti il turno.`; res += botTurno(s) 
+        }
+        return res
+    } else {
+        if (s.mazzo.length === 0) s.mazzo = creaMazzo()
+        s.botHand.push(s.mazzo.shift()); return `\n🤖 Bot pesca.`
+    }
 }
 
 handler.command = /^(uno)$/i
