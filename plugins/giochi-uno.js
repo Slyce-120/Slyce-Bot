@@ -10,13 +10,6 @@ const coloriHex = {
     'Jolly': '#1C1C1E' 
 }
 
-const coloriEmoji = { 'Rosso': '🟥', 'Blu': '🟦', 'Giallo': '🟨', 'Verde': '🟩' }
-
-const playAgainButtons = () => [{
-    name: 'quick_reply',
-    buttonParamsJson: JSON.stringify({ display_text: '🔄 RIGIOCA', id: '.uno' })
-}];
-
 const gameButtons = () => [{
     name: 'quick_reply',
     buttonParamsJson: JSON.stringify({ display_text: '📥 PESCA', id: 'pesca' })
@@ -48,6 +41,10 @@ async function generaGrafica(s) {
             ctx.beginPath()
             ctx.roundRect(x + 4, y + 4, w - 8, h - 8, 5)
             ctx.fill()
+            ctx.fillStyle = '#ffffff'
+            ctx.font = `bold ${30 * scale}px Arial`
+            ctx.textAlign = 'center'
+            ctx.fillText('?', x + (w/2), y + (h/1.6))
         } else {
             ctx.fillStyle = color
             ctx.beginPath()
@@ -56,7 +53,8 @@ async function generaGrafica(s) {
             ctx.fillStyle = '#ffffff'
             ctx.textAlign = 'center'
             ctx.font = `bold ${22 * scale}px Arial`
-            ctx.fillText(label.split(' ')[1] || 'UNO', x + (w/2), y + (h/2) + 10)
+            let val = label.includes('Jolly') ? 'Jolly' : label.split(' ')[1]
+            ctx.fillText(val || 'UNO', x + (w/2), y + (h/2) + 10)
         }
     }
 
@@ -73,6 +71,7 @@ async function generaGrafica(s) {
         drawCard(startX + (i * 90), 420, c, col, false, 1)
         ctx.fillStyle = '#ffffff'
         ctx.font = 'bold 18px Arial'
+        ctx.textAlign = 'center'
         ctx.fillText(i + 1, startX + (i * 90) + 40, 565)
     })
 
@@ -91,23 +90,21 @@ function creaMazzo() {
     let colori = ['Rosso', 'Blu', 'Giallo', 'Verde']
     let mazzo = []
     colori.forEach(c => {
-        for (let v = 0; v <= 9; v++) mazzo.push(`${c} ${v}`)
+        for (let v = 0; v <= 9; v++) {
+            mazzo.push(`${c} ${v}`)
+            if (v !== 0) mazzo.push(`${c} ${v}`) // Doppia copia tranne lo 0
+        }
         mazzo.push(`${c} +2`)
     })
-    for (let i = 0; i < 4; i++) mazzo.push('Jolly', 'Jolly +4')
-    return mazzo.sort(() => Math.random() - 0.5)
-}
-
-function pescaCarte(mazzo, mano, quantita) {
-    for (let i = 0; i < quantita; i++) {
-        if (mazzo.length === 0) mazzo.push(...creaMazzo())
-        mano.push(mazzo.shift())
+    for (let i = 0; i < 4; i++) {
+        mazzo.push('Jolly')
+        mazzo.push('Jolly +4')
     }
+    return mazzo.sort(() => Math.random() - 0.5)
 }
 
 let handler = async (m, { conn }) => {
     let chat = m.chat
-    let name = conn.getName(m.sender)
     let mazzo = creaMazzo()
     
     unoSession[chat] = {
@@ -123,7 +120,7 @@ let handler = async (m, { conn }) => {
     let img = await generaGrafica(unoSession[chat])
     await conn.sendMessage(chat, {
         image: img,
-        caption: `🃏 *GARA DI UNO: ${name.toUpperCase()}*\n\nTocca i bottoni o scrivi il numero della carta!`,
+        caption: `🃏 *UNO MATCH INIZIATO!*\n🎨 Colore attuale: *${unoSession[chat].currentColor}*`,
         interactiveButtons: gameButtons()
     }, { quoted: m })
 }
@@ -140,65 +137,65 @@ handler.before = async (m, { conn }) => {
     }
 
     if (msgText === '.uno') return
-    let name = conn.getName(m.sender)
+    let report = ''
 
     if (msgText === 'enduno' || msgText === '🛑 abbandona') {
         delete unoSession[chat]
-        return m.reply('🏳️ *Partita terminata.*')
+        return m.reply('🛑 Partita chiusa.')
     }
 
-    let report = ''
     if (msgText === 'pesca' || msgText === '📥 pesca') {
         let p = s.mazzo.shift()
         s.playerHand.push(p)
-        report = `📥 Hai pescato una carta.`
+        report = `📥 Hai pescato: ${p}`
         if (!puoGiocare(p, s.tableCard, s.currentColor)) {
-            // Turno Bot
-            let bIdx = s.botHand.findIndex(c => puoGiocare(c, s.tableCard, s.currentColor))
-            if (bIdx !== -1) {
-                let cb = s.botHand.splice(bIdx, 1)[0]
-                s.tableCard = cb
-                s.currentColor = cb.includes('Jolly') ? s.currentColor : cb.split(' ')[0]
-                report += `\n🤖 Bot gioca: ${cb}`
-            }
+            report += `\n❌ Non puoi giocare, passa il turno.`
+            report += botTurno(s)
         }
     } else {
         let index = parseInt(msgText) - 1
         if (isNaN(index) || index < 0 || index >= s.playerHand.length) return
         
         let carta = s.playerHand[index]
-        if (!puoGiocare(carta, s.tableCard, s.currentColor)) return m.reply('❌ Non puoi giocare questa carta!')
+        if (!puoGiocare(carta, s.tableCard, s.currentColor)) return m.reply('❌ Mossa non valida!')
 
         s.playerHand.splice(index, 1)
         s.tableCard = carta
         s.currentColor = carta.includes('Jolly') ? s.currentColor : carta.split(' ')[0]
         report = `✅ Hai giocato ${carta}`
-
-        // Turno Bot
-        let bIdx = s.botHand.findIndex(c => puoGiocare(c, s.tableCard, s.currentColor))
-        if (bIdx !== -1) {
-            let cb = s.botHand.splice(bIdx, 1)[0]
-            s.tableCard = cb
-            s.currentColor = cb.includes('Jolly') ? s.currentColor : cb.split(' ')[0]
-            report += `\n🤖 Bot gioca: ${cb}`
-        } else {
-            s.botHand.push(s.mazzo.shift())
-            report += `\n🤖 Bot pesca.`
-        }
+        report += botTurno(s)
     }
 
-    if (s.playerHand.length === 0 || s.botHand.length === 0) {
-        let win = s.playerHand.length === 0
-        delete unoSession[chat]
-        return conn.sendMessage(chat, { text: win ? '🏆 HAI VINTO!' : '💀 HAI PERSO!', interactiveButtons: playAgainButtons() })
+    if (s.playerHand.length === 0) {
+        delete unoSession[chat]; return m.reply('🏆 HAI VINTO!')
+    }
+    if (s.botHand.length === 0) {
+        delete unoSession[chat]; return m.reply('💀 IL BOT HA VINTO!')
     }
 
     let img = await generaGrafica(s)
     await conn.sendMessage(chat, {
         image: img,
-        caption: `🔔 *SITUAZIONE:*\n${report}`,
+        caption: report,
         interactiveButtons: gameButtons()
     }, { quoted: m })
+}
+
+function botTurno(s) {
+    // Il bot prova a giocare prima le carte normali, poi i jolly
+    let mossePossibili = s.botHand.filter(c => puoGiocare(c, s.tableCard, s.currentColor))
+    
+    if (mossePossibili.length > 0) {
+        // Priorità alle carte NON Jolly
+        let scelta = mossePossibili.find(c => !c.includes('Jolly')) || mossePossibili[0]
+        s.botHand.splice(s.botHand.indexOf(scelta), 1)
+        s.tableCard = scelta
+        s.currentColor = scelta.includes('Jolly') ? ['Rosso','Blu','Verde','Giallo'][Math.floor(Math.random()*4)] : scelta.split(' ')[0]
+        return `\n🤖 Il Bot ha giocato: *${scelta}*`
+    } else {
+        s.botHand.push(s.mazzo.shift())
+        return `\n🤖 Il Bot non aveva mosse e ha pescato.`
+    }
 }
 
 handler.command = /^(uno)$/i
