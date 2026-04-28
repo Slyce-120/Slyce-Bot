@@ -42,7 +42,7 @@ async function generaGrafica(s) {
     drawCard(50, 240, 'Mazzo', '#3a3a3c', true, 0.9)
     let botX = 500 - (Math.min(s.botHand.length, 10) * 15)
     s.botHand.slice(0, 12).forEach((_, i) => drawCard(botX + (i * 30), 40, '', '', true, 0.7))
-
+    
     let tColore = coloriHex[s.currentColor] || coloriHex['Jolly']
     drawCard(460, 230, s.tableCard, tColore, false, 1.2)
 
@@ -84,7 +84,7 @@ let handler = async (m, { conn }) => {
         currentColor: ''
     }
     unoSession[chat].currentColor = unoSession[chat].tableCard.split(' ')[0]
-
+    
     let img = await generaGrafica(unoSession[chat])
     await conn.sendMessage(chat, { 
         image: img, 
@@ -96,9 +96,9 @@ let handler = async (m, { conn }) => {
 handler.before = async (m, { conn }) => {
     let chat = m.chat, s = unoSession[chat]
     if (!s || s.player !== m.sender) return
-
+    
     let msgText = (m.text || m.body || '').trim().toLowerCase()
-
+    
     if (m.message?.interactiveResponseMessage?.nativeFlowResponseMessage?.paramsJson) {
         try {
             const params = JSON.parse(m.message.interactiveResponseMessage.nativeFlowResponseMessage.paramsJson)
@@ -159,7 +159,7 @@ function botTurno(s) {
         s.botHand.splice(s.botHand.indexOf(scelta), 1); s.tableCard = scelta
         s.currentColor = scelta.includes('Jolly') ? ['Rosso','Blu','Verde','Giallo'][Math.floor(Math.random()*4)] : scelta.split(' ')[0]
         let res = `\n🤖 Bot gioca: *${scelta}*`
-
+        
         if (scelta.includes('+2')) { 
             for(let i=0; i<2; i++) s.playerHand.push(s.mazzo.shift())
             res += `\n⚠️ Ti becchi +2! Salti il turno.`; res += botTurno(s) 
