@@ -164,7 +164,7 @@ function botTurno(s) {
             for(let i=0; i<2; i++) s.playerHand.push(s.mazzo.shift())
             res += `\n⚠️ Ti becchi +2! Salti il turno.`; res += botTurno(s) 
         } else if (scelta.includes('+4')) { 
-            for(let i=0; i<4; i++) s.playerHand.push(s.mazzo.shift())
+            for(let i=0; i<4; i++). s.playerHand.push(s.mazzo.shift())
             res += `\n🔥 Ti becchi +4! Salti il turno.`; res += botTurno(s) 
         }
         return res
