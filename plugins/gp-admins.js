@@ -4,10 +4,11 @@
 const handler = async (m, { conn, participants, groupMetadata, args }) => {
     const groupAdmins = participants.filter(p => p.admin);
     
-    // Usiamo una logica più forte per estrarre solo il numero
+    // Usiamo decodeJid per convertire gli ID strani (LID) in JID standard
     const listAdmin = groupAdmins
         .map((v, i) => {
-            const num = v.id.split('@')[0].replace(/[^\d]/g, '');
+            const jid = conn.decodeJid(v.id);
+            const num = jid.split('@')[0];
             return `✧👑 ${i + 1}. @${num}`;
         })
         .join('\n');
