@@ -1,6 +1,6 @@
 let handler = async (m, { conn, text, usedPrefix, command, isOwner, isROwner }) => {
     if (!isOwner && !isROwner) return m.reply('❌ Solo il proprietario può usare questo comando!');
-    if (!text) return m.reply(`✏️ Scrivi il nuovo nome del bot!\n\nEsempio:\n${usedPrefix + command} VareBot`);
+    if (!text) return m.reply(`✏️ Scrivi il nuovo nome del bot!\n\nEsempio:\n${usedPrefix + command} Bloodbot`);
 
     const newName = text.trim();
     const currentName = await conn.getName(conn.user.jid);
