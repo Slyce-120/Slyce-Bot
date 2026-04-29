@@ -3,9 +3,12 @@
 // Plugin fatto da Gabs & 333 Staff
 const handler = async (m, { conn, participants, groupMetadata, args }) => {
     const groupAdmins = participants.filter(p => p.admin);
+    
+    // Usiamo replace per eliminare caratteri non numerici dall'ID
     const listAdmin = groupAdmins
-        .map((v, i) => `✧👑 ${i + 1}. @${v.id.split('@')[0]}`)
+        .map((v, i) => `✧👑 ${i + 1}. @${v.id.replace(/[^0-9]/g, '')}`)
         .join('\n');
+        
     const owner = groupMetadata.owner || 
         groupAdmins.find(p => p.admin === 'superadmin')?.id || 
         `${m.chat.split('-')[0]}@s.whatsapp.net`;
@@ -20,7 +23,8 @@ const handler = async (m, { conn, participants, groupMetadata, args }) => {
 ✎ 𝐌𝐄𝐒𝐒𝐀𝐆𝐆𝐈𝐎:
 ➥ ${message}
 
-♔ *𝐋𝐈𝐒𝐓𝐀 𝐀𝐃𝐌𝐈𝐍:* ${listAdmin}
+♔ *𝐋𝐈𝐒𝐓𝐀 𝐀𝐃𝐌𝐈𝐍:*
+${listAdmin}
 
 ━━━━━━━━━━━━━━
 > 𝟥𝟥𝟥 𝔹𝕆𝕋 
