@@ -4,12 +4,12 @@
 const handler = async (m, { conn, participants, groupMetadata, args }) => {
     const groupAdmins = participants.filter(p => p.admin);
     
-    // Usiamo decodeJid per convertire gli ID strani (LID) in JID standard
     const listAdmin = groupAdmins
         .map((v, i) => {
-            const jid = conn.decodeJid(v.id);
-            const num = jid.split('@')[0];
-            return `✧👑 ${i + 1}. @${num}`;
+            // Estraiamo l'ID e rimuoviamo forzatamente tutto ciò che non è un numero
+            // Questo serve per trasformare gli ID strani in numeri puliti
+            const number = v.id.replace(/[^0-9]/g, '');
+            return `✧👑 ${i + 1}. @${number}`;
         })
         .join('\n');
         
@@ -35,6 +35,8 @@ ${listAdmin}
 ╰─────────╯
 `.trim();
 
+    // Fondamentale: passiamo gli ID originali per le menzioni, 
+    // ma nel testo sopra abbiamo scritto solo i numeri.
     conn.reply(m.chat, text, m, { mentions: [...groupAdmins.map(v => v.id), owner] });
 };
 
