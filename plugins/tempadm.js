@@ -17,31 +17,33 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
   else if (unit === 'h') timer = duration * 60 * 60 * 1000;
   else if (unit === 'd') timer = duration * 24 * 60 * 60 * 1000;
 
-  const user = global.db.data.users[who];
-  if (!user) return m.reply(`*❌ Errore:* Utente non presente nel database.`);
-
   try {
+    const groupMetadata = await conn.groupMetadata(m.chat);
+    const isAlreadyAdmin = groupMetadata.participants.find(p => p.id === who && (p.admin || p.ismember));
+    
     await conn.groupParticipantsUpdate(m.chat, [who], 'promote');
     
     const timeStr = await formatTime(timer);
     const name = '@' + who.split`@`[0];
     
-    const confirmMsg = `*⚡ ADMIN TEMPORANEO*\n\n*👤 Utente:* ${name}\n*⏳ Durata:* ${duration}${unit}\n*📉 Scade tra:* ${timeStr}`;
+    const confirmMsg = `*⚡ ADMIN TEMPORANEO IMPOSTATO*\n\n*👤 Utente:* ${name}\n*⏳ Durata:* ${duration}${unit}\n*📉 Scadenza:* ${timeStr}\n\n_Al termine del tempo verrà rimosso automaticamente._`;
     
-    m.reply(confirmMsg, null, { mentions: [who] });
+    await m.reply(confirmMsg, null, { mentions: [who] });
 
     setTimeout(async () => {
-      const groupMetadata = await conn.groupMetadata(m.chat);
-      const isStillAdmin = groupMetadata.participants.find(p => p.id === who && p.admin);
-
-      if (isStillAdmin) {
+      const updatedMetadata = await conn.groupMetadata(m.chat);
+      const stillInGroup = updatedMetadata.participants.find(p => p.id === who);
+      
+      if (stillInGroup) {
         await conn.groupParticipantsUpdate(m.chat, [who], 'demote');
-        conn.reply(m.chat, `*⏰ Tempo scaduto!*\nL'utente ${name} non è più admin.`, null, { mentions: [who] });
+        
+        const finishMsg = `*⏰ TEMPO SCADUTO*\n\nL'utente ${name} è stato rimosso dai privilegi di Admin come previsto.`;
+        conn.reply(m.chat, finishMsg, null, { mentions: [who] });
       }
     }, timer);
 
   } catch (e) {
-    m.reply('*❌ Errore:* Assicurati che il bot sia admin.');
+    m.reply('*❌ Errore:* Assicurati che il bot sia Admin e che l\'utente sia nel gruppo.');
   }
 };
 
