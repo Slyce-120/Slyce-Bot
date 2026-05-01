@@ -10,7 +10,7 @@ const localImg = join(process.cwd(), 'menu-euro.jpeg');
 const defaultMenu = {
   before: `
 ┎━━━━━━━━━━━━━━━━━━━┑
-┃   ✧  𝐁𝐋𝐃 - 𝐄𝐂𝐎𝐍𝐎𝐌𝐘  ✧   ┃
+┃   ✧  𝑺𝑳𝑪 - 𝐄𝐂𝐎𝐍𝐎𝐌𝐘  ✧   ┃
 ┖━━━━━━━━━━━━━━━━━━━┙
 ┌───────────────────┐
   👤 𝚄𝚜𝚎𝚛: %name
@@ -85,7 +85,7 @@ let handler = async (m, { conn, usedPrefix: _p, __dirname, args, command}) => {
         mentionedJid: [m.sender],
         forwardedNewsletterMessageInfo: {
           newsletterJid: '120363232743845068@newsletter',
-          newsletterName: "✧ 𝙱𝙻𝙳-𝙱𝙾𝚃 𝙴𝙲𝙾𝙽𝙾𝙼𝚈 ✧"
+          newsletterName: "✧ 𝑺𝑳𝒀𝑪𝑬 𝑩𝑶𝑻 𝙴𝙲𝙾𝙽𝙾𝙼𝚈 ✧"
         }
       }
     }, { quoted: m })
