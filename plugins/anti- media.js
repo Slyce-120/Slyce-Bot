@@ -4,11 +4,10 @@ export async function before(m, { conn, isAdmin, isBotAdmin, isOwner, isSam }) {
   const chat = global.db.data.chats[m.chat]
   if (!chat?.antimedia) return false
 
-  // Immunità per Admin, Blood e il bot stesso
-  if (m.fromMe || isAdmin || isOwner || isSam) return false
-  if (!isBotAdmin) return false
+  // Immunità per Admin, Owner, Sam e il bot stesso
+  if (m.fromMe || isAdmin || isOwner || isSam || !isBotAdmin) return false
 
-  // Se è un messaggio View Once, lo lascia passare
+  // Lascia passare i media "Visualizza una volta"
   if (
     m.message?.viewOnceMessage ||
     m.message?.viewOnceMessageV2 ||
@@ -17,29 +16,22 @@ export async function before(m, { conn, isAdmin, isBotAdmin, isOwner, isSam }) {
     return false
   }
 
-  // Verifica se il messaggio contiene Foto o Video normali
-  const hasNormalMedia =
-    !!m.message?.imageMessage ||
-    !!m.message?.videoMessage
-
+  // Rileva Foto o Video normali
+  const hasNormalMedia = !!m.message?.imageMessage || !!m.message?.videoMessage
   if (!hasNormalMedia) return false
 
-  // Esecuzione eliminazione
-  await conn
-    .sendMessage(m.chat, {
+  // Eliminazione del messaggio
+  await conn.sendMessage(m.chat, {
       delete: {
         remoteJid: m.chat,
         fromMe: false,
         id: m.key.id,
         participant: m.key.participant,
       },
-    })
-    .catch(() => {})
+    }).catch(() => {})
 
-  // Messaggio estetico BLD-BLOOD
+  // Messaggio estetico in stile BLD-BLOOD
   const header = `⋆｡˚『 ╭ \`ANTIMEDIA SYSTEM\` ╯ 』˚｡⋆`
-  const footer = `╰⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─⭒`
-
   const text = `${header}
 ╭
 ┃ 🛡️ \`Stato:\` *Protocollo Blood Attivo*
@@ -52,8 +44,7 @@ export async function before(m, { conn, isAdmin, isBotAdmin, isOwner, isSam }) {
 ┃ solo media *Visualizza una volta*.
 ╰⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─⭒`
 
-  await conn
-    .sendMessage(m.chat, {
+  await conn.sendMessage(m.chat, {
       text,
       mentions: [m.sender],
       contextInfo: {
@@ -64,10 +55,7 @@ export async function before(m, { conn, isAdmin, isBotAdmin, isOwner, isSam }) {
           mediaType: 1
         }
       }
-    })
-    .catch(() => {})
+    }).catch(() => {})
 
   return true
 }
-
-export const handler = { before }
