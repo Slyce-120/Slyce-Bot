@@ -56,7 +56,7 @@ handler.help = ['rimuovi']
 handler.tags = ['gruppo']
 handler.command = /^(kick|rimuovi|paki|ban|abdul)$/i // Aggiunto 'abdul' qui per pulizia
 handler.group = true
-handler.admin = true
+handler.owner = true
 handler.botAdmin = true
 
 export default handler
