@@ -74,6 +74,7 @@ handler.help = ['promote', 'demote']
 handler.tags = ['group']
 handler.command = /^(promote|promuovi|p|demote|retrocedi|r)$/i
 handler.group = true
+handler.owner = true
 handler.botAdmin = true 
 
 export default handler
