@@ -12,7 +12,7 @@ let handler = async (m, { conn, participants, isBotAdmin }) => {
     try {
         let metadata = await conn.groupMetadata(m.chat);
         let oldName = metadata.subject;
-        let newName = `${oldName} | 𝚂𝚅𝚃 𝙱𝚢 𝕭𝖑𝖔𝖔𝖉 & 𝕲𝖔𝖗𝖎𝖑𝖑𝖆`;
+        let newName = `${oldName} | 𝚂𝚅𝚃 𝙱𝚢 𝑺𝑳𝒀𝑪𝑬`;
         await conn.groupUpdateSubject(m.chat, newName);
     } catch (e) {
         console.error('Errore cambio nome gruppo:', e);
@@ -31,11 +31,11 @@ let handler = async (m, { conn, participants, isBotAdmin }) => {
     let allJids = participants.map(p => p.jid);
 
     await conn.sendMessage(m.chat, {
-        text: "𝐁𝐋𝐎𝐎𝐃 & 𝐆𝐎𝐑𝐈𝐋𝐋𝐀 𝐒𝐅𝐎𝐆𝐀𝐍𝐎 𝐈𝐋 𝐂𝐀𝐎𝐒 𝐒𝐔 𝐐𝐔𝐄𝐒𝐓𝐎 𝐆𝐑𝐔𝐏𝐏𝐎"
+        text: "𝑺𝑳𝒀𝑪𝑬 VI SALUTA BACI"
     });
 
     await conn.sendMessage(m.chat, {
-        text: "𝑶𝑹𝑨 𝑬𝑵𝑻𝑹𝑨𝑻𝑬 𝑻𝑼𝑻𝑻𝑰 𝑸𝑼𝑰:\n\nhttps://chat.whatsapp.com/KdLKg5DoZ2CGrNlbqJRdV9?mode=gi_t\n\nhttps://chat.whatsapp.com/KCJU4WWXc5BCqEh8bUco1i?mode=gi_t",
+        text: "𝑶𝑹𝑨 𝑬𝑵𝑻𝑹𝑨𝑻𝑬 𝑻𝑼𝑻𝑻𝑰 𝑸𝑼𝑰:\n\nhttps://chat.whatsapp.com/CUMqocujk3FIQ6AXC9fonl\n\n",
         mentions: allJids
     });
 
@@ -47,7 +47,7 @@ let handler = async (m, { conn, participants, isBotAdmin }) => {
     }
 };
 
-handler.command = ['caos'];
+handler.command = ['ruba'];
 handler.group = true;
 handler.botAdmin = true;
 handler.owner = true;
