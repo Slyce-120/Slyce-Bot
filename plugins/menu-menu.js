@@ -17,7 +17,7 @@ let tags = {
 const defaultMenu = {
   testoInizio: `
 ┏━━━━━━━━━━━━━━━━━━━━┓
-   💠  *B L D  -  B O T* 💠
+   💠  *S L C  -  B O T* 💠
 ┗━━━━━━━━━━━━━━━━━━━━┛
  ┌───────────────────
  │ 👤 *User:* %name
@@ -31,7 +31,7 @@ const defaultMenu = {
   header: '      ⋆｡˚『 %category 』˚｡⋆\n╭',
   body: '*│ ➢* 『%emoji』 %cmd',
   footer: '*╰━━━━━━━──────━━━━━━━*\n',
-  testoFine: `_Powered by BLD-BOT Interface_`,
+  testoFine: `_Powered by 𝑺𝑳𝒀𝑪𝑬 𝑩𝑶𝑻 Interface_`,
 }
 
 const localImg = './menu-principale.jpeg'
@@ -101,7 +101,7 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
     await conn.sendMessage(m.chat, {
       ...(imageBuffer ? { image: imageBuffer } : {}),
       caption: text.trim(),
-      footer: "B L D - B O T  S Y S T E M",
+      footer: "𝑺𝑳𝒀𝑪𝑬 𝑩𝑶𝑻 SISTEM",
       buttons: buttons,
       headerType: 4,
       viewOnce: true
