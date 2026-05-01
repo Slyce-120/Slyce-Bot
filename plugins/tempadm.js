@@ -1,4 +1,11 @@
-const handler = async (m, { conn, text, usedPrefix, command }) => {
+const handler = async (m, { conn, text, usedPrefix, command, participants }) => {
+  const isAdmin = participants.find(p => p.id === m.sender)?.admin;
+  const isOwner = m.sender === conn.user.jid || global.owner.some(owner => owner[0] === m.sender.split('@')[0]);
+
+  if (!isAdmin && !isOwner) {
+    return m.reply(`*❌ Accesso Negato*\nSolo gli admin reali possono usare questo comando. Tu sei un admin temporaneo o un utente semplice.`);
+  }
+
   let who;
   if (m.isGroup) who = m.mentionedJid[0] ? m.mentionedJid[0] : m.quoted ? m.quoted.sender : false;
   else who = m.chat;
@@ -49,7 +56,6 @@ handler.help = ['tempadm @user <tempo>'];
 handler.tags = ['group'];
 handler.command = ['tempadm', 'tempadmin'];
 handler.group = true;
-handler.admin = true;
 handler.botAdmin = true;
 
 export default handler;
