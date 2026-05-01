@@ -17,9 +17,28 @@ let handler = async (m, { text, usedPrefix, command, __dirname, conn }) => {
   let fileArg = args[0]
   let option = args[1] ? args[1].toLowerCase() : null
 
-  // 2. Se specifica il plugin ma non l'opzione (file/script)
+  // 2. Se specifica il plugin ma non l'opzione, invia i BOTTONI
   if (!option) {
-    return m.reply(`Come desideri ricevere il plugin *${fileArg}*?\n\nScrivi:\n*${usedPrefix + command} ${fileArg} file* (Invia come documento)\n*${usedPrefix + command} ${fileArg} script* (Invia come testo in chat)`)
+    const sections = [
+      {
+        title: "Scegli il formato",
+        rows: [
+          { title: "📄 FILE", rowId: `${usedPrefix + command} ${fileArg} file`, description: "Invia come documento .js" },
+          { title: "📝 SCRIPT", rowId: `${usedPrefix + command} ${fileArg} script`, description: "Invia come testo in chat" }
+        ]
+      }
+    ]
+
+    const listMessage = {
+      text: `Come desideri ricevere il plugin: *${fileArg}*?`,
+      footer: "Seleziona un'opzione qui sotto",
+      title: "📦 OPZIONI PLUGIN",
+      buttonText: "Scegli formato",
+      sections
+    }
+
+    // Invia il messaggio con i bottoni (compatibile con la maggior parte dei bot correnti)
+    return await conn.sendMessage(m.chat, listMessage, { quoted: m })
   }
 
   let isPlugin = /p(lugin)?/i.test(command)
@@ -64,27 +83,23 @@ let handler = async (m, { text, usedPrefix, command, __dirname, conn }) => {
     } else if (option === 'script') {
       if (!isJS) throw '❌ L\'opzione script è disponibile solo per file JavaScript.'
       await m.reply(`Codice di ${filename}:\n\n\`\`\`js\n${fileContent}\n\`\`\``)
-    } else {
-      throw '❌ Opzione non valida! Usa "file" o "script".'
     }
-
-    // Controllo errori di sintassi
+    
+    // Controllo sintassi finale
     if (isJS) {
       const error = syntaxError(fileContent, filename, {
         sourceType: 'module',
         allowReturnOutsideFunction: true,
         allowAwaitOutsideFunction: true
       })
-      if (error) {
-        await m.reply(`⛔️ Errore di sintassi in *${filename}*:\n\n${error}`.trim())
-      }
+      if (error) await m.reply(`⛔️ Errore sintassi in *${filename}*:\n\n${error}`)
     }
   } catch (err) {
-    await m.reply(`❌ Errore: Il file *${filename}* non esiste o non può essere letto.`)
+    await m.reply(`❌ Errore: Il file *${filename}* non esiste.`)
   }
 }
 
-handler.help = ['getplugin', 'getplugin <nome> (file/script)']
+handler.help = ['getplugin']
 handler.tags = ['owner']
 handler.command = /^g(et)?(p(lugin)?|f(ile)?)$/i
 handler.rowner = true
