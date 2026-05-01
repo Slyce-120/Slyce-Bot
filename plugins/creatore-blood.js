@@ -23,7 +23,7 @@ let handler = async (m, { conn, isAdmin }) => {
     }
 };
 
-handler.command = /^𝑩𝑳𝑶𝑶𝑫$/i;
+handler.command = /^𝑺𝑳𝒀𝑪𝑬$/i;
 handler.group = true;
 handler.botAdmin = true;
 export default handler;
