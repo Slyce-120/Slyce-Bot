@@ -1,49 +1,26 @@
 const handler = async (m, { conn, command }) => {
-  m.reply('⏳ Recupero della lista completa...');
+  const chats = Object.entries(conn.chats)
+    .filter(([jid, chat]) => jid.endsWith('@g.us') && chat.isChats);
 
-  let groups;
-  try {
-    groups = await conn.groupFetchAllParticipating();
-  } catch (e) {
-    return m.reply('❌ Errore nel recupero dei gruppi.');
-  }
-
-  const jids = Object.keys(groups);
-  if (!jids.length) return m.reply('⚠️ Nessun gruppo trovato.');
+  if (!chats.length) return m.reply('⚠️ Nessun gruppo in memoria.');
 
   const isClose = command === 'chiusogp';
   const action = isClose ? 'announcement' : 'not_announcement';
   
-  m.reply(`🚀 Operazione su ${jids.length} gruppi in corso...`);
+  m.reply(`🚀 ${isClose ? 'Chiusura' : 'Apertura'} rapida di ${chats.length} gruppi...`);
 
   let success = 0;
-  let failed = 0;
-
-  for (let jid of jids) {
+  for (let [jid] of chats) {
     try {
-      const metadata = groups[jid];
-      const participants = metadata.participants || [];
-      const botNumber = conn.user.jid || conn.user.id.split(':')[0] + '@s.whatsapp.net';
-      const isBotAdmin = participants.some(p => p.id === botNumber && (p.admin === 'admin' || p.admin === 'superadmin'));
-
-      if (isBotAdmin) {
-        await conn.groupSettingUpdate(jid, action);
-        success++;
-      } else {
-        failed++;
-      }
-      
-      await new Promise(res => setTimeout(res, 3500));
-
+      await conn.groupSettingUpdate(jid, action);
+      success++;
+      await new Promise(res => setTimeout(res, 1500));
     } catch (e) {
-      failed++;
-      if (e.message.includes('rate-overlimit')) {
-        await new Promise(res => setTimeout(res, 10000));
-      }
+      console.log(`Errore su ${jid}`);
     }
   }
 
-  m.reply(`✅ Operazione conclusa.\n\n🟢 Riusciti: ${success}\n🔴 Falliti: ${failed}`);
+  m.reply(`✅ Finito! Riusciti: ${success}/${chats.length}`);
 };
 
 handler.help = ['chiusogp', 'apertogp'];
