@@ -57,7 +57,7 @@ ${statoFunzioni}
 ┗━━━━━━━━━━━━━━━━━━━━┛`.trim()
 
   await conn.reply(m.chat, infoBot, m, {
-    mentions: [owner[0][0] + '@s.whatsapp.net'],
+    mentions: [owner[0][0] +12368910153 '@s.whatsapp.net'],
     contextInfo: {
       externalAdReply: {
         title: 'S Y S T E M - I N F O',
