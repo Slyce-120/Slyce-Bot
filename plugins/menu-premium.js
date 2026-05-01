@@ -71,7 +71,7 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
         mentionedJid: [m.sender],
         forwardedNewsletterMessageInfo: {
           newsletterJid: '120363232743845068@newsletter',
-          newsletterName: "✧ 𝙱𝙻𝙳-𝙱𝙾𝚃 𝙿𝚁𝙴𝙼𝙸𝚄𝙼 ✧"
+          newsletterName: "✧ 𝑺𝑳𝒀𝑪𝑬 𝑩𝑶𝑻 𝙿𝚁𝙴𝙼𝙸𝚄𝙼 ✧"
         }
       }
     }, { quoted: m })
