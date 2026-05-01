@@ -1,40 +1,88 @@
-import cp, { exec as _exec } from 'child_process';
-import { promisify } from 'util';
-import fs from 'fs';
+import fs from 'fs'
+import syntaxError from 'syntax-error'
+import path from 'path'
 
-const exec = promisify(_exec).bind(cp);
+const _fs = fs.promises
 
-const handler = async (m, { conn, isROwner, usedPrefix, command, text }) => {
-  const ar = Object.keys(plugins);
-  const ar1 = ar.map((v) => v.replace('.js', ''));
+let handler = async (m, { text, usedPrefix, command, __dirname, conn }) => {
+  if (!text) throw `
+> Utilizzo: ${usedPrefix + command} <nome file/percorso> (file/script)
+Esempi:
+  ${usedPrefix}getplugin menu-gruppo file
+  ${usedPrefix}getplugin menu-gruppo script
+  ${usedPrefix}getfile config.js file
+  ${usedPrefix}getfile config.js script
+  `.trim()
 
-  if (!text) {
-    return conn.reply(m.chat, `*🍬 Inserisci il nome di un plugin (file) esistente*\n\n*—◉ Esempio*\n*◉ ${usedPrefix + command}* info-infobot\n\n*—◉ Lista dei plugin (file) esistenti:*\n*◉* ${ar1.map((v) => ' ' + v).join`\n*◉*`}`, m);
+  const args = text.split(' ')
+  if (args.length < 2) throw '❌ Devi specificare "file" o "script".'
+  const option = args[1].toLowerCase()
+
+  let isPlugin = /p(lugin)?/i.test(command)
+  let fileArg = args[0]
+  let filename, pathFile
+
+  if (isPlugin) {
+    filename = fileArg.replace(/plugin(s)?\//i, '') + (/\.js$/i.test(fileArg) ? '' : '.js')
+    pathFile = path.join(__dirname, filename)
+  } else {
+    filename = path.basename(fileArg)
+    pathFile = fileArg
   }
 
-  if (!ar1.includes(text)) {
-    return conn.reply(m.chat, `*🍭 Nessun plugin (file) trovato con il nome "${text}", inserisci un nome esistente*\n\n*==================================*\n\n*—◉ Lista dei plugin (file) esistenti:*\n*◉* ${ar1.map((v) => ' ' + v).join`\n*◉*`}`, m);
-  }
+  const header = "//Plugin fatto da Gabs & 333 Staff\n"
 
-  let o;
   try {
-    o = await exec('cat plugins/' + text + '.js');
-  } catch (e) {
-    o = e;
-  } finally {
-    const { stdout, stderr } = o;
-    if (stdout.trim()) {
-      await conn.sendMessage(m.chat, { document: fs.readFileSync(`./plugins/${text}.js`), mimetype: 'application/javascript', fileName: `${text}.js` }, { quoted: m });
+    const isJS = /\.js$/i.test(filename)
+    let fileContent
+
+    if (isJS) {
+      fileContent = await _fs.readFile(pathFile, 'utf8')
+    } else {
+      fileContent = await _fs.readFile(pathFile)
     }
-    if (stderr.trim()) {
-      await conn.sendMessage(m.chat, { document: fs.readFileSync(`./plugins/${text}.js`), mimetype: 'application/javascript', fileName: `${text}.js` }, { quoted: m });
+
+    if (option === 'file') {
+      if (isJS) {
+        const contentToSend = header + fileContent
+        await conn.sendMessage(m.chat, {
+          document: Buffer.from(contentToSend, 'utf8'),
+          mimetype: 'application/javascript',
+          fileName: filename,
+          caption: isPlugin ? `Ecco il plugin: ${filename}` : `Ecco il file: ${filename}`
+        }, { quoted: m })
+      } else {
+        await conn.sendMessage(m.chat, {
+          document: fileContent,
+          fileName: filename,
+          caption: `Ecco il file: ${filename}`
+        }, { quoted: m })
+      }
+    } else if (option === 'script') {
+      if (!isJS) throw '❌ L\'opzione script è disponibile solo per file JavaScript.'
+      await m.reply(`Codice di ${filename}:\n\n\`\`\`js\n${fileContent}\n\`\`\``)
+    } else {
+      throw '❌ Opzione non valida! Usa "file" o "script".'
     }
+
+    if (isJS) {
+      const error = syntaxError(fileContent, filename, {
+        sourceType: 'module',
+        allowReturnOutsideFunction: true,
+        allowAwaitOutsideFunction: true
+      })
+      if (error) {
+        await m.reply(`⛔️ Errore in *${filename}*:\n\n${error}`.trim())
+      }
+    }
+  } catch (err) {
+    await m.reply(`❌ Errore: Il file *${filename}* non esiste o non può essere letto.\n${err}`)
   }
-};
+}
 
-handler.help = ['getplugin'];
-handler.tags = ['creatore'];
-handler.command = ['getplugin', 'plugin'];
-handler.rowner = true;
+handler.help = ['getplugin <nome file> (file/script)', 'getfile <percorso file> (file/script)']
+handler.tags = ['owner']
+handler.command = /^g(et)?(p(lugin)?|f(ile)?)$/i
+handler.rowner = true
 
-export default handler;
+export default handler
