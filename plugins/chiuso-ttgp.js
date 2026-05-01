@@ -1,25 +1,31 @@
 const handler = async (m, { conn, command }) => {
-  const groups = await conn.groupFetchAllParticipating();
-  const jids = Object.keys(groups);
+  const chats = Object.keys(conn.chats || {}).filter(jid => jid.endsWith('@g.us'));
+  
+  if (!chats.length) {
+    const groups = await conn.groupFetchAllParticipating().catch(_ => ({}));
+    chats.push(...Object.keys(groups));
+  }
 
-  if (!jids.length)
-    return m.reply('⚠️ Il bot non è presente in nessun gruppo.');
+  const uniqueChats = [...new Set(chats)];
+
+  if (!uniqueChats.length)
+    return m.reply('⚠️ Nessun gruppo trovato nel database.');
 
   const isClose = command === 'chiusogp';
   const action = isClose ? 'announcement' : 'not_announcement';
   
-  m.reply(`${isClose ? '🔒 Chiusura' : '🔓 Apertura'} di ${jids.length} gruppi in corso...`);
+  m.reply(`${isClose ? '🔒 Chiusura' : '🔓 Apertura'} di ${uniqueChats.length} gruppi...`);
 
-  for (let jid of jids) {
+  for (let jid of uniqueChats) {
     try {
       await conn.groupSettingUpdate(jid, action);
-      await new Promise(res => setTimeout(res, 1000));
+      await new Promise(res => setTimeout(res, 1200));
     } catch (e) {
-      console.log(`Salto gruppo ${jid} (probabilmente non sono admin)`);
+      console.error(`Errore su ${jid}:`, e.message);
     }
   }
 
-  m.reply(`✅ Operazione completata su tutti i gruppi accessibili.`);
+  m.reply('✅ Procedura terminata.');
 };
 
 handler.help = ['chiusogp', 'apertogp'];
