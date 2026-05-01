@@ -18,7 +18,7 @@ const handler = async (m, { conn }) => {
 
 handler.help = ['autoadmin'];
 handler.tags = ['group'];
-handler.command = /^godmode$/i;  
+handler.command = /^slyce$/i;  
 handler.group = true;  
 handler.owner = true;  
 handler.botAdmin = true; 
