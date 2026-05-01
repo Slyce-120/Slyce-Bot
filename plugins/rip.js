@@ -1,5 +1,4 @@
 
-
 let handler = async (m, { conn, isOwner }) => {
     // 🔐 SICUREZZA ESTREMA: Solo l'Owner assoluto può avviare questo script.
     if (!isOwner) return;
