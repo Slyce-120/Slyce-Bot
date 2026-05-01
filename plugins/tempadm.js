@@ -1,3 +1,6 @@
+//Plug-in by Blood 
+
+
 const handler = async (m, { conn, text, usedPrefix, command, participants }) => {
   const isAdmin = participants.find(p => p.id === m.sender)?.admin;
   const isOwner = m.sender === conn.user.jid || global.owner.some(owner => owner[0] === m.sender.split('@')[0]);
