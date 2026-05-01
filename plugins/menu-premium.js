@@ -7,7 +7,7 @@ const localImg = join(process.cwd(), 'menu-premium.jpeg');
 const defaultMenu = {
   before: `
 ┎━━━━━━━━━━━━━━━━━━━┑
-┃   ✧  𝐁𝐋𝐃 - 𝐏𝐑𝐄𝐌𝐈𝐔𝐌  ✧   ┃
+┃   ✧  𝑺𝑳𝑪 - 𝐏𝐑𝐄𝐌𝐈𝐔𝐌  ✧   ┃
 ┖━━━━━━━━━━━━━━━━━━━┙
 ┌───────────────────┐
   👤 𝚄𝚜𝚎𝚛: %name
