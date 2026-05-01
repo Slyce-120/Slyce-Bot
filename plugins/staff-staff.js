@@ -1,14 +1,14 @@
 let handler = async (m, { conn, command, usedPrefix }) => {
     let staff = `
-ㅤㅤ⋆｡˚『 ╭ \`STAFF BLD BOT\` ╯ 』˚｡⋆\n╭\n│
+ㅤㅤ⋆｡˚『 ╭ \`STAFF 𝑺𝑳𝒀𝑪𝑬 𝑩𝑶𝑻\` ╯ 』˚｡⋆\n╭\n│
 │ 『 🤖 』 \`Bot:\` *${global.nomebot}*
 │ 『 🍥 』 \`Versione:\` *${global.versione}*
 │
 │⭒─ׄ─『 👑 \`Sviluppatore\` 』 ─ׄ─⭒
 │
-│ • \`Nome:\` *𝐁𝐋𝐎𝐎𝐃#ᵛᵉˡᶦᵗʰ*
+│ • \`Nome:\` ꪶ͢ 𝓩𝓮𝓾𝓼 ꫂ ⁷⁷⁷
 │ • \`Ruolo:\` *Creatore / dev*
-│ • \`Contatto:\` @393701330693
+│ • \`Contatto:\` @393762257368
 │
 │⭒─ׄ─『 🛡️ \`Moderatori\` 』 ─ׄ─⭒
 │
@@ -16,9 +16,7 @@ let handler = async (m, { conn, command, usedPrefix }) => {
 │ • \`Ruolo:\` *Moderatore*
 │─ׄ─『 📌 \`Info Utili\` 』 ─ׄ─⭒
 │
-│ • \`GitHub:\` *github.com/BLOOD212*
-│ • \`Supporto:\` @393701330693
-│ • *instagram.com/blood_ilreal*
+│ 
 │
 *╰⭒─ׄ─ׅ─ׄ─⭒─ׄ─ׅ─ׄ─*`;
     await conn.reply(
@@ -48,8 +46,8 @@ let handler = async (m, { conn, command, usedPrefix }) => {
                 {
                     vcard: `BEGIN:VCARD
 VERSION:3.0
-FN:blood
-ORG:BloodBot - Creatore
+FN:slyce
+ORG:SlyceBot - Creatore
 TEL;type=CELL;type=VOICE;waid=393476686131:+393476686131
 END:VCARD`
                 },
@@ -57,7 +55,7 @@ END:VCARD`
                     vcard: `BEGIN:VCARD
 VERSION:3.0
 FN: DEATH 
-ORG:BloodBot - Moderatore
+ORG:SlyceBot - Moderatore
 TEL;type=CELL;type=VOICE;waid=67078163216:+67078163216
 END:VCARD`
                 },
