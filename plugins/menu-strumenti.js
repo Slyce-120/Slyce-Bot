@@ -7,7 +7,7 @@ const localImg = join(process.cwd(), 'menu-strumenti.jpeg');
 const defmenu = {
   before: `
 ┏━━━━━━━━━━━━━━━━━━━━┓
-   💉  *B L O O D  -  T O O L S* 💉
+   💉  *𝑺𝑳𝒀𝑪𝑬  -  T O O L S* 💉
 ┗━━━━━━━━━━━━━━━━━━━━┛
  ┌───────────────────
  │ 🧪 *Soggetto:* %name
@@ -23,7 +23,7 @@ const defmenu = {
 
 let handler = async (m, { conn, usedPrefix: _p }) => {
   let tags = {
-    'strumenti': 'LABORATORIO BLOOD'
+    'strumenti': 'LABORATORIO SLYCE'
   }
 
   try {
@@ -64,7 +64,7 @@ let handler = async (m, { conn, usedPrefix: _p }) => {
         forwardedNewsletterMessageInfo: {
           ...fake.contextInfo?.forwardedNewsletterMessageInfo,
           newsletterJid: '120363232743845068@newsletter',
-          newsletterName: "🩸 Cyber Blood - Tools ☣️"
+          newsletterName: "🩸 Cyber Slyce - Tools ☣️"
         }
       }
     }, { quoted: m })
