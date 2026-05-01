@@ -28,20 +28,20 @@ global.prems = ['xxxxxxxxxxx', 'xxxxxxxxxxx', 'xxxxxxxxxxx']
 
 /*⭑⭒━━━✦❘༻🩸 INFO BOT 🕊️༺❘✦━━━⭒⭑*/
 
-global.nomepack = 'BLD-BLOOD'
-global.nomebot = 'BLD-BLOOD'
-global.wm = 'BLD-BLOOD'
-global.autore = 'BLOOD'
-global.dev = 'BLOOD'
-global.testobot = `BLD-BLOOD`
+global.nomepack = '𝑺𝑳𝒀𝑪𝑬 𝑩𝑶𝑻'
+global.nomebot = '𝑺𝑳𝒀𝑪𝑬 𝑩𝑶𝑻'
+global.wm = '𝑺𝑳𝒀𝑪𝑬 𝑩𝑶𝑻'
+global.autore = '𝑺𝑳𝒀𝑪𝑬 𝑩𝑶𝑻'
+global.dev = '𝑺𝑳𝒀𝑪𝑬'
+global.testobot = `𝑺𝑳𝒀𝑪𝑬 𝑩𝑶𝑻`
 global.versione = pkg.version
 global.errore = '*ERRORE INATTESO*, UTILIZZA IL COMANDO .segnala (errore) per contattare lo sviluppatore. contatto diretto:+39 370 133 0693'
 
 /*⭑⭒━━━✦❘༻🌐 LINK 🌐༺❘✦━━━⭒⭑*/
 
 global.repobot ='https//wa.me/393701330693'
-global.gruppo = 'https://chat.whatsapp.com/KdLKg5DoZ2CGrNlbqJRdV9'
-global.insta = 'https://www.instagram.com/bloodvelith'
+global.gruppo = ''
+global.insta = ''
 
 /*⭑⭒━━━✦❘༻ MODULI ༺❘✦━━━⭒⭑*/
 
