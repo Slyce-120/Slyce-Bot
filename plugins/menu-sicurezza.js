@@ -43,7 +43,7 @@ let handler = async (m, { conn, usedPrefix: _p, command, args, isOwner, isAdmin 
   if (!args.length || /menu|help/i.test(args[0])) {
     let text = `
 ┎━━━━━━━━━━━━━━━━━━━━┑
-┃   ✧  𝐁𝐋𝐃 - 𝐌𝐀𝐒𝐓𝐄𝐑 𝐂𝐎𝐍𝐓𝐑𝐎𝐋  ✧   ┃
+┃   ✧  SLC - 𝐌𝐀𝐒𝐓𝐄𝐑 𝐂𝐎𝐍𝐓𝐑𝐎𝐋  ✧   ┃
 ┖━━━━━━━━━━━━━━━━━━━━┙
 ┌────────────────────┐
   👤 𝚄𝚜𝚎𝚛: ${userName}
