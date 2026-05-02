@@ -5,7 +5,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
     return await conn.reply(m.chat, '💻 *GitHub:* https://github.com/BLOOD212/BLD-BLOOD-BOT', m)
   }
   if (command === 'insta') {
-    return await conn.reply(m.chat, '📸 *Instagram:* https://www.instagram.com/blood_ilreal', m)
+    return await conn.reply(m.chat, '📸 *Instagram:* https://www.instagram.com/zeus_ilreal?igsh=OHFmdTduaTl4aTNh&utm_source=qr', m)
   }
 
   // Se invece il comando è 'owner' o 'creatore', manda il box con i bottoni
@@ -19,13 +19,13 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 ecco i riferimenti ufficiali del mio creatore.
 
 *┏━━━━━━━━━━━━━━━━┓*
-*┃* 👤 *OWNER:* Blood
+*┃* 👤 *OWNER:* Slyce
 *┃* 🪐 *STATUS:* Online
 *┃* 💻 *DEV:* JavaScript / Node.js
 *┗━━━━━━━━━━━━━━━━┛*
 
 ━━━━━━━━━━━━━━━━━━━━
-   *😈 𝖇𝖑𝖔𝖔𝖉 𝖉𝖔𝖒𝖎𝖓𝖆 ⚡*
+   *😈 ˢᴸʸᶜᴱ 𝖉𝖔𝖒𝖎𝖓𝖆 ⚡*
 ━━━━━━━━━━━━━━━━━━━━`.trim()
 
   const buttons = [
@@ -37,7 +37,7 @@ ecco i riferimenti ufficiali del mio creatore.
 
   const buttonMessage = {
       text: text,
-      footer: 'ᴘᴏᴡᴇʀᴇᴅ ʙʏ ʙʟᴅ ʙʟᴏᴏᴅ ʙᴏᴛ',
+      footer: 'ᴘᴏᴡᴇʀᴇᴅ ʙʏ ˢᴸʸᶜᴱ ʙᴏᴛ',
       buttons: buttons,
       headerType: 1,
       mentions: [m.sender]
