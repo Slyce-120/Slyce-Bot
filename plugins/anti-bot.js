@@ -58,7 +58,7 @@ export async function before(m, { conn, isAdmin, isOwner, isSam }) {
     mentions: [m.sender],
     contextInfo: {
       externalAdReply: {
-        title: 'BLD-BLOOD SECURITY',
+        title: '𝕊𝕃𝕐ℂ𝔼 SECURITY',
         body: 'Rilevamento connessione non sicura',
         thumbnailUrl: 'https://qu.ax/TfUj.jpg', // Usa la tua immagine se ne hai una specifica
         mediaType: 1,
