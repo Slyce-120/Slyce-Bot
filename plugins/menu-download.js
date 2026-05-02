@@ -23,7 +23,7 @@ const defaultMenu = {
   header: '┍━━━〔 %category 〕━━━┑',
   body: '┇ 📥  *%cmd*',
   footer: '┕━━━━━──ׄ──ׅ──ׄ──━━━━━┙\n',
-  after: `_ʙʟᴅ-ʙᴏᴛ ɴᴇᴛᴡᴏʀᴋ ᴅᴀᴛᴀ_`
+  after: `ˢᴸʸᶜᴱ ɴᴇᴛᴡᴏʀᴋ ᴅᴀᴛᴀ_`
 }
 
 let handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
