@@ -2,7 +2,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
   
   // Se il comando eseguito è 'git' o 'insta', manda solo il link e chiudi la funzione
   if (command === 'git') {
-    return await conn.reply(m.chat, '💻 *GitHub:* https://github.com/BLOOD212/BLD-BLOOD-BOT', m)
+    return await conn.reply(m.chat, '💻 *GitHub:* non disponibile', m)
   }
   if (command === 'insta') {
     return await conn.reply(m.chat, '📸 *Instagram:* https://www.instagram.com/zeus_ilreal?igsh=OHFmdTduaTl4aTNh&utm_source=qr', m)
