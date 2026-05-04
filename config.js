@@ -13,10 +13,10 @@ const moduleCache = new NodeCache({ stdTTL: 300 });
 
 /*⭑⭒━━━✦❘༻☾⋆⁺₊✧ˢᴸʸᶜᴱ✧₊⁺⋆☽༺❘✦━━━⭒⭑*/
 
-global.zeus = ['12368910153'];
+global.jack = ['393762257368'];
 global.owner = [
-  ['xxxxxxxxxxxx', 'xxxxx', true],
   ['12368910153', 'zeus', true],
+  ['212612624296', 'zack', true],
   ['xxxxxxxxxxxx', 'xxxxx', true],
   ['xxxxxxxxxxxx', 'xxxxx', true],
   ['xxxxxxxxxxxx', 'xxxxx', true],
